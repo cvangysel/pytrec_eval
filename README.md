@@ -81,12 +81,12 @@ The above snippet will return a data structure that contains the requested evalu
 	    }
 	}
 	
-For more like this, see the examples that uses [parametrized evaluation measures](examples/simple_cut.py).
+For more like this, see the example that uses [parametrized evaluation measures](examples/simple_cut.py).
 
 Frequently Asked Questions
 --------------------------
 
-Since the module's first release, no questions have been asked so frequently that they deserved a spot in this section.
+Since the module's initial release, no questions have been asked so frequently that they deserve a spot in this section.
 
 License
 -------
