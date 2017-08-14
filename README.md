@@ -31,7 +31,7 @@ Installation is simple and should be relatively painless if your Python environm
 Examples
 --------
 
-Check out the examples that simulates the standard [trec\_eval front-end](examples/trec_eval.py) and that computes [statistical significance](examples/statistical_significance.py) between two runs.
+Check out the examples that simulate the standard [trec\_eval front-end](examples/trec_eval.py) and that compute [statistical significance](examples/statistical_significance.py) between two runs.
 
 To get a grasp of how simple the module is to use, check this out:
 
