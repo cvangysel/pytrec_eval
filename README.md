@@ -31,7 +31,7 @@ Installation is simple and should be relatively painless if your Python environm
 Examples
 --------
 
-Check out the examples that simulates the standard [trec\_eval front-end](examples/trec_eval.py) and that computes [statistical significance](examples/statistical_significance.py) between two runs.
+Check out the examples that simulate the standard [trec\_eval front-end](examples/trec_eval.py) and that compute [statistical significance](examples/statistical_significance.py) between two runs.
 
 To get a grasp of how simple the module is to use, check this out:
 
@@ -81,12 +81,12 @@ The above snippet will return a data structure that contains the requested evalu
 	    }
 	}
 	
-For more like this, see the examples that uses [parametrized evaluation measures](examples/simple_cut.py).
+For more like this, see the example that uses [parametrized evaluation measures](examples/simple_cut.py).
 
 Frequently Asked Questions
 --------------------------
 
-Since the module's first release, no questions have been asked so frequently that they deserved a spot in this section.
+Since the module's initial release, no questions have been asked so frequently that they deserve a spot in this section.
 
 License
 -------
