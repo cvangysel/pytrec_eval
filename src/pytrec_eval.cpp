@@ -1,7 +1,7 @@
 #include <Python.h>
 #include "structmember.h"
 
-// trec_Eval includes.
+// trec_eval includes.
 #include "common.h"
 #include "sysfunc.h"
 #include "trec_eval.h"
@@ -10,6 +10,8 @@
 extern "C" int te_print_single_meas_a_cut (
     const EPI *epi, const TREC_MEAS *tm,
     const TREC_EVAL *eval);
+
+extern "C" int te_form_res_rels_cleanup();
 
 #include "functions.h"
 
@@ -605,6 +607,8 @@ static PyObject* RelevanceEvaluator_evaluate(RelevanceEvaluator* self, PyObject*
 
     Free(q_eval.values);
     Free(accum_eval.values);
+
+    te_form_res_rels_cleanup();
 
     return result;
 }

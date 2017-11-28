@@ -17,8 +17,92 @@ def prefix_match(needle, haystack):
     return match
 
 
+class PyTrecEvalUnitTest(unittest.TestCase):
+
+    def test_ndcg(self):
+        qrel = {
+            'q1': {
+                'd1': 0,
+                'd2': 1,
+                'd3': 0,
+            },
+            'q2': {
+                'd2': 1,
+                'd3': 1,
+            },
+        }
+
+        evaluator = pytrec_eval.RelevanceEvaluator(
+            qrel, {'map', 'ndcg'})
+
+        self.assertAlmostEqual(
+            evaluator.evaluate({
+                'q1': {
+                    'd1': 1.0,
+                    'd2': 0.0,  # rank 3
+                    'd3': 1.5,
+                },
+                'q2': {},
+            })['q1']['ndcg'],
+            0.5)
+
+        self.assertAlmostEqual(
+            evaluator.evaluate({
+                'q1': {
+                    'd1': 1.0,
+                    'd2': 2.0,  # rank 1
+                    'd3': 1.5,
+                },
+                'q2': {},
+            })['q1']['ndcg'],
+            1.0)
+
+        self.assertAlmostEqual(
+            evaluator.evaluate({
+                'q1': {
+                    'd1': 1.0,
+                    'd2': 2.0,  # rank 1
+                    'd3': 1.5,
+                },
+                'q2': {},
+            })['q1']['ndcg'],
+            1.0)
+
+        self.assertAlmostEqual(
+            evaluator.evaluate({
+                'q1': {
+                    'd1': 4.0,
+                    'd2': 2.0,  # rank 2
+                    'd3': 1.5,
+                },
+                'q2': {},
+            })['q1']['ndcg'],
+            0.6309297535714575)
+
+        self.assertAlmostEqual(
+            evaluator.evaluate({
+                'q1': {
+                    'd1': 1.0,
+                    'd2': 2.0,  # rank 1
+                    'd3': 1.5,
+                },
+            })['q1']['ndcg'],
+            1.0)
+
+        self.assertAlmostEqual(
+            evaluator.evaluate({
+                'q1': {
+                    'd1': 4.0,
+                    'd2': 2.0,  # rank 2
+                    'd3': 1.5,
+                },
+                'q2': {},
+            })['q1']['ndcg'],
+            0.6309297535714575)
+
+
 # TODO(cvangysel): add tests to detect memory leaks.
-class PyTrecEvalTest(unittest.TestCase):
+class PyTrecEvalIntegrationTest(unittest.TestCase):
 
     pass
 
@@ -89,6 +173,6 @@ if __name__ == '__main__':
                     for key, value in test_case[3].items()))
 
         test_fn = generate_traditional_test(*test_case[:3], **test_case[3])
-        setattr(PyTrecEvalTest, test_name, test_fn)
+        setattr(PyTrecEvalIntegrationTest, test_name, test_fn)
 
     unittest.main()
