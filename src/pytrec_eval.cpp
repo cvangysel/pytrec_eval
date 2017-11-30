@@ -16,6 +16,7 @@ extern "C" int te_form_res_rels_cleanup();
 #include "functions.h"
 
 // Standard library.
+#include <algorithm>
 #include <map>
 #include <set>
 #include <string>
@@ -278,14 +279,10 @@ class ResultRankingBuilder : public RankingBuilder<RESULTS, TEXT_RESULTS_INFO, T
     }
 };
 
-int qrel_docno_compare(
-        const void* raw_a, const void* raw_b) {
-    const QrelRankingBuilder::QueryDocumentPairType* a =
-        (QrelRankingBuilder::QueryDocumentPairType*) raw_a;
-    const QrelRankingBuilder::QueryDocumentPairType* b =
-        (QrelRankingBuilder::QueryDocumentPairType*) raw_b;
-
-    return std::string(a->docno).compare(b->docno);
+bool qrel_docno_compare(
+        const QrelRankingBuilder::QueryDocumentPairType& a,
+        const QrelRankingBuilder::QueryDocumentPairType& b) {
+    return strcmp(a.docno, b.docno) < 0;
 }
 
 static int RelevanceEvaluator_init(RelevanceEvaluator* self, PyObject* args, PyObject* kwds) {
@@ -397,10 +394,14 @@ static int RelevanceEvaluator_init(RelevanceEvaluator* self, PyObject* args, PyO
     CHECK_NOTNULL(queries);
 
     for (size_t query_idx = 0; query_idx < num_queries; ++query_idx) {
-        qsort(((TEXT_QRELS_INFO*) queries[query_idx].q_rel_info)->text_qrels,
-              ((TEXT_QRELS_INFO*) queries[query_idx].q_rel_info)->num_text_qrels,
-              sizeof(QrelRankingBuilder::QueryDocumentPairType),
-              qrel_docno_compare);
+        TEXT_QRELS_INFO* const text_qrels_info = (TEXT_QRELS_INFO*) queries[query_idx].q_rel_info;
+
+        QrelRankingBuilder::QueryDocumentPairType* const text_qrels = text_qrels_info->text_qrels;
+        const long num_text_qrels = text_qrels_info->num_text_qrels;
+
+        std::sort(
+            text_qrels, text_qrels + num_text_qrels,
+            qrel_docno_compare);
     }
 
     self->all_rel_info_.num_q_rels = num_queries;
@@ -435,16 +436,12 @@ static void RelevanceEvaluator_dealloc(RelevanceEvaluator* self) {
     delete self->measures_;
 }
 
-int query_document_pair_compare(
-        const void* raw_a, const void* raw_b) {
-    const ResultRankingBuilder::QueryDocumentPairType* a =
-        (ResultRankingBuilder::QueryDocumentPairType*) raw_a;
-    const ResultRankingBuilder::QueryDocumentPairType* b =
-        (ResultRankingBuilder::QueryDocumentPairType*) raw_b;
-
-    if (a->sim < b->sim) return 1;
-    if (a->sim > b->sim) return -1;
-    return std::string(a->docno).compare(b->docno);
+bool query_document_pair_compare(
+        const ResultRankingBuilder::QueryDocumentPairType& a,
+        const ResultRankingBuilder::QueryDocumentPairType& b) {
+    if (a.sim < b.sim) return false;
+    if (a.sim > b.sim) return true;
+    return strcmp(a.docno, b.docno) < 0;
 }
 
 static PyObject* RelevanceEvaluator_evaluate(RelevanceEvaluator* self, PyObject* args) {
@@ -475,10 +472,14 @@ static PyObject* RelevanceEvaluator_evaluate(RelevanceEvaluator* self, PyObject*
     CHECK_NOTNULL(queries);
 
     for (size_t query_idx = 0; query_idx < num_queries; ++query_idx) {
-        qsort(((TEXT_RESULTS_INFO*) queries[query_idx].q_results)->text_results,
-              ((TEXT_RESULTS_INFO*) queries[query_idx].q_results)->num_text_results,
-              sizeof(ResultRankingBuilder::QueryDocumentPairType),
-              query_document_pair_compare);
+        TEXT_RESULTS_INFO* const text_results_info = (TEXT_RESULTS_INFO*) queries[query_idx].q_results;
+
+        ResultRankingBuilder::QueryDocumentPairType* const text_results = text_results_info->text_results;
+        const long num_text_results = text_results_info->num_text_results;
+
+        std::sort(
+            text_results, text_results + num_text_results,
+            query_document_pair_compare);
     }
 
     ALL_RESULTS all_results;

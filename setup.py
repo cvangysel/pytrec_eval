@@ -16,7 +16,7 @@ pytrec_eval_ext = Extension(
     libraries=['m', 'stdc++'],
     include_dirs=[TREC_EVAL_DIR],
     undef_macros=['NDEBUG'],
-    extra_compile_args=['-g', '-Wall'],
+    extra_compile_args=['-g', '-Wall', '-O3'],
     define_macros=[('VERSIONID', '\"pytrec_eval\"'),
                    ('_GLIBCXX_USE_CXX11_ABI', '0'),
                    ('P_NEEDS_GNU_CXX_NAMESPACE', '1')])
