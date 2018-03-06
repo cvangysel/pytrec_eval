@@ -1,5 +1,6 @@
-from cvangysel.trec_utils import parse_trec_eval
+import collections
 import os
+import re
 import unittest
 
 import pytrec_eval
@@ -15,6 +16,26 @@ def prefix_match(needle, haystack):
         return None
 
     return match
+
+
+def parse_trec_eval(f):
+    measure_re = re.compile(r'^([A-Za-z0-9_\-]+)\s+(.*)\s+([0-9\.e\-]+)$')
+
+    trec_eval = collections.defaultdict(dict)
+
+    for line in f:
+        result = measure_re.match(line)
+
+        if result:
+            measure, topic, value = \
+                result.group(1), result.group(2), result.group(3)
+
+            if measure in trec_eval[topic]:
+                raise RuntimeError()
+
+            trec_eval[topic][measure] = float(value)
+
+    return trec_eval
 
 
 class PyTrecEvalUnitTest(unittest.TestCase):
