@@ -13,20 +13,7 @@ Installation
 
 Installation is simple and should be relatively painless if your Python environment is functioning correctly (see below for FAQs).
 
-	# Clone the source.
-	git clone https://github.com/cvangysel/pytrec_eval.git
-	
-	cd pytrec_eval
-	
-	# Pull in the trec_eval source.
-	git submodule init
-	git submodule update
-	
-	# Install dependencies.
-	pip install -r requirements.txt
-	
-	# Install pytrec_eval.
-	python setup.py install
+	pip install pytrec_eval
 	
 Examples
 --------
