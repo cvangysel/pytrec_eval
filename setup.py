@@ -35,7 +35,7 @@ with tempfile.TemporaryDirectory() as tmp_dir:
 
     for filename in os.listdir(trec_eval_dir):
         if filename.endswith('.c'):
-            TREC_EVAL_SRC.append(os.path.join(LOCAL_TREC_EVAL_DIR, filename))
+            TREC_EVAL_SRC.append(os.path.join(trec_eval_dir, filename))
 
     pytrec_eval_ext = Extension(
         'pytrec_eval_ext',
@@ -49,7 +49,7 @@ with tempfile.TemporaryDirectory() as tmp_dir:
                        ('P_NEEDS_GNU_CXX_NAMESPACE', '1')])
 
     setup(name='pytrec_eval',
-          version='0.2',
+          version='0.3',
           description='Provides Python bindings for popular '
                       'Information Retrieval measures implemented '
                       'within trec_eval.',
@@ -60,7 +60,7 @@ with tempfile.TemporaryDirectory() as tmp_dir:
           package_dir={'pytrec_eval': 'py'},
           python_requires='>=3',
           url='https://github.com/cvangysel/pytrec_eval',
-          download_url='https://github.com/cvangysel/pytrec_eval/tarball/0.2',
+          download_url='https://github.com/cvangysel/pytrec_eval/tarball/0.3',
           keywords=[
               'trec_eval',
               'information retrieval',
