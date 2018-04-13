@@ -75,6 +75,21 @@ Frequently Asked Questions
 
 Since the module's initial release, no questions have been asked so frequently that they deserve a spot in this section.
 
+Citation
+--------
+
+If you use pytrec\_eval to produce results for your scientific publication, please refer to our SIGIR paper:
+
+```
+@inproceedings{VanGysel2018pytreceval,
+  title={Pytrec\_eval: An Extremely Fast Python Interface to trec\_eval},
+  author={Van Gysel, Christophe and de Rijke, Maarten},
+  publisher={ACM},
+  booktitle={SIGIR},
+  year={2018},
+}
+```
+
 License
 -------
 
