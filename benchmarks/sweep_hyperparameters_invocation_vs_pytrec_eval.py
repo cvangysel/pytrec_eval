@@ -15,7 +15,7 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--tmp_dir', type=str, default=None)
-    parser.add_argument('--num_repeats', type=int, default=3)
+    parser.add_argument('--num_repeats', type=int, default=20)
 
     parser.add_argument('--measurements_out', type=str, required=True)
 

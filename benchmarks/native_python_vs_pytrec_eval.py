@@ -60,7 +60,8 @@ def main():
 
     plt.style.use('bmh')
 
-    speedups = []
+    speedups_mean = []
+    speedups_std = []
 
     for num_documents_per_query in args.num_documents_per_query:
         document_scores = {
@@ -101,9 +102,16 @@ def main():
             native_durations.append(native_duration)
             pytrec_eval_durations.append(pytrec_eval_duration)
 
-        speedup = np.mean(native_durations) / np.mean(pytrec_eval_durations)
+        native_durations = np.array(native_durations)
+        pytrec_eval_durations = np.array(pytrec_eval_durations)
 
-        speedups.append(speedup)
+        speedups = native_durations / pytrec_eval_durations
+
+        speedup_mean = np.mean(speedups)
+        speedups_mean.append(speedup_mean)
+
+        speedup_std = np.std(speedups)
+        speedups_std.append(speedup_std)
 
     x = np.arange(len(args.num_documents_per_query))
 
@@ -113,7 +121,9 @@ def main():
     plt.plot([0, len(args.num_documents_per_query) - 1], [1.0, 1.0],
              '--', color='r')
 
-    plt.plot(x, speedups)
+    plt.errorbar(x, speedups_mean, speedups_std, linestyle='-', marker='^')
+
+    # plt.plot(x, speedups_mean)
 
     plt.xlabel('Number of documents', fontsize=14)
     plt.ylabel('Speedup', fontsize=14)
