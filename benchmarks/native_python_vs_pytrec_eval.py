@@ -123,8 +123,6 @@ def main():
 
     plt.errorbar(x, speedups_mean, speedups_std, linestyle='-', marker='^')
 
-    # plt.plot(x, speedups_mean)
-
     plt.xlabel('Number of documents', fontsize=14)
     plt.ylabel('Speedup', fontsize=14)
 
