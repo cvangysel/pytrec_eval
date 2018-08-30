@@ -56,8 +56,6 @@ int PyDict_SetItemAndSteal(PyObject* p, PyObject* key, PyObject* val) {
     return ret;
 }
 
-static PyTypeObject RelevanceEvaluatorType;
-
 // RelevanceEvaluator
 
 typedef struct {
@@ -411,7 +409,7 @@ static int RelevanceEvaluator_init(RelevanceEvaluator* self, PyObject* args, PyO
         const std::string& qid = queries[query_idx].qid;
         CHECK_EQ(self->query_id_to_idx_->find(qid), self->query_id_to_idx_->end());
 
-        self->query_id_to_idx_->insert({qid, query_idx});
+        self->query_id_to_idx_->insert(std::pair<std::string, size_t>(qid, query_idx));
     }
 
     return NULL;
@@ -634,7 +632,7 @@ static PyModuleDef PyTrecEvalModule = {
 };
 
 PyMODINIT_FUNC PyInit_pytrec_eval_ext(void) {
-    RelevanceEvaluatorType = {
+    PyTypeObject RelevanceEvaluatorType = {
         PyVarObject_HEAD_INIT(NULL, 0)
         "pytrec_eval.RelevanceEvaluator",   /* tp_name */
         sizeof(RelevanceEvaluator),         /* tp_basicsize */
