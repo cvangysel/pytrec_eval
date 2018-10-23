@@ -56,6 +56,8 @@ int PyDict_SetItemAndSteal(PyObject* p, PyObject* key, PyObject* val) {
     return ret;
 }
 
+static PyTypeObject RelevanceEvaluatorType;
+
 // RelevanceEvaluator
 
 typedef struct {
@@ -632,7 +634,7 @@ static PyModuleDef PyTrecEvalModule = {
 };
 
 PyMODINIT_FUNC PyInit_pytrec_eval_ext(void) {
-    PyTypeObject RelevanceEvaluatorType = {
+    PyTypeObject RelevanceEvaluatorType_local = {
         PyVarObject_HEAD_INIT(NULL, 0)
         "pytrec_eval.RelevanceEvaluator",   /* tp_name */
         sizeof(RelevanceEvaluator),         /* tp_basicsize */
@@ -672,6 +674,8 @@ PyMODINIT_FUNC PyInit_pytrec_eval_ext(void) {
         0,                         /* tp_alloc */
         RelevanceEvaluator_new,             /* tp_new */
     };
+
+    RelevanceEvaluatorType = RelevanceEvaluatorType_local;
 
     if (PyType_Ready(&RelevanceEvaluatorType) < 0) {
         return NULL;
