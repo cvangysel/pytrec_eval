@@ -268,12 +268,12 @@ class ResultRankingBuilder : public RankingBuilder<RESULTS, TEXT_RESULTS_INFO, T
     virtual bool ProcessQueryDocumentPair(TEXT_RESULTS* const pair,
                                           PyObject* const inner_value) const {
         if (PyFloat_Check(inner_value)) {
-			pair->sim = PyFloat_AsDouble(inner_value);
-		} else if (PyLong_Check(inner_value)) {
-			pair->sim = PyLong_AsDouble(inner_value);
-		} else {
-            PyErr_SetString(PyExc_TypeError, "Expected matching score to be int or float.");
-            return false;
+		pair->sim = PyFloat_AsDouble(inner_value);
+	} else if (PyLong_Check(inner_value)) {
+		pair->sim = PyLong_AsDouble(inner_value);
+	} else {
+		PyErr_SetString(PyExc_TypeError, "Expected matching score to be int, long or float.");
+		return false;
         }
         return true;
     }
