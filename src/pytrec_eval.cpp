@@ -1,6 +1,7 @@
 #include <Python.h>
 #include "structmember.h"
 
+
 // trec_eval includes.
 #include "common.h"
 #include "sysfunc.h"
@@ -91,6 +92,12 @@ static PyObject* RelevanceEvaluator_new(PyTypeObject* type, PyObject* args, PyOb
     return (PyObject*) self;
 }
 
+char* copy(const char* orig) {
+    char *res = new char[strlen(orig)+1];
+    strcpy(res, orig);
+    return res;
+}
+
 template <typename QueryT, typename ListOfPairsT, typename PairT>
 class RankingBuilder {
  public:
@@ -128,7 +135,7 @@ class RankingBuilder {
 
             Py_INCREF(key);
 
-            queries[query_idx].qid = PyUnicode_AsUTF8(key);
+            queries[query_idx].qid = copy(PyUnicode_AsUTF8(key));
             CHECK_NOTNULL(queries[query_idx].qid);
 
             PairT* const query_document_pairs = Malloc(PyDict_Size(value), PairT);
@@ -147,7 +154,7 @@ class RankingBuilder {
                     return false;  // TODO(cvangysel): need to clean up here!
                 }
 
-                query_document_pairs[pair_idx].docno = PyUnicode_AsUTF8(inner_key);
+                query_document_pairs[pair_idx].docno = copy(PyUnicode_AsUTF8(inner_key));
                 CHECK_NOTNULL(query_document_pairs[pair_idx].docno);
 
                 if (!ProcessQueryDocumentPair(&query_document_pairs[pair_idx],
