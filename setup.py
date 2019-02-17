@@ -49,7 +49,7 @@ with tempfile.TemporaryDirectory() as tmp_dir:
                        ('P_NEEDS_GNU_CXX_NAMESPACE', '1')])
 
     setup(name='pytrec_eval',
-          version='0.3',
+          version='0.4',
           description='Provides Python bindings for popular '
                       'Information Retrieval measures implemented '
                       'within trec_eval.',
@@ -60,7 +60,7 @@ with tempfile.TemporaryDirectory() as tmp_dir:
           package_dir={'pytrec_eval': 'py'},
           python_requires='>=3',
           url='https://github.com/cvangysel/pytrec_eval',
-          download_url='https://github.com/cvangysel/pytrec_eval/tarball/0.3',
+          download_url='https://github.com/cvangysel/pytrec_eval/tarball/0.4',
           keywords=[
               'trec_eval',
               'information retrieval',
