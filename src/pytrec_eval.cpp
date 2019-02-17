@@ -57,7 +57,7 @@ int PyDict_SetItemAndSteal(PyObject* p, PyObject* key, PyObject* val) {
 }
 
 char* CopyCString(const char* originalCString) {
-    char* const newCString = new char[strlen(orig) + 1];
+    char* const newCString = new char[strlen(originalCString) + 1];
     strcpy(newCString, originalCString);
     return newCString;
 }
