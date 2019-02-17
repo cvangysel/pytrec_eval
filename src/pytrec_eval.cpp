@@ -56,6 +56,12 @@ int PyDict_SetItemAndSteal(PyObject* p, PyObject* key, PyObject* val) {
     return ret;
 }
 
+char* CopyCString(const char* originalCString) {
+    char* const newCString = new char[strlen(originalCString) + 1];
+    strcpy(newCString, originalCString);
+    return newCString;
+}
+
 static PyTypeObject RelevanceEvaluatorType;
 
 // RelevanceEvaluator
@@ -128,7 +134,7 @@ class RankingBuilder {
 
             Py_INCREF(key);
 
-            queries[query_idx].qid = PyUnicode_AsUTF8(key);
+            queries[query_idx].qid = CopyCString(PyUnicode_AsUTF8(key));
             CHECK_NOTNULL(queries[query_idx].qid);
 
             PairT* const query_document_pairs = Malloc(PyDict_Size(value), PairT);
@@ -147,7 +153,7 @@ class RankingBuilder {
                     return false;  // TODO(cvangysel): need to clean up here!
                 }
 
-                query_document_pairs[pair_idx].docno = PyUnicode_AsUTF8(inner_key);
+                query_document_pairs[pair_idx].docno = CopyCString(PyUnicode_AsUTF8(inner_key));
                 CHECK_NOTNULL(query_document_pairs[pair_idx].docno);
 
                 if (!ProcessQueryDocumentPair(&query_document_pairs[pair_idx],
