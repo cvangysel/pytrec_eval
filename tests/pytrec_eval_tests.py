@@ -168,7 +168,58 @@ class PyTrecEvalUnitTest(unittest.TestCase):
                 'q2': {}
             })['q1'].keys()),
             official_metrics | set_metrics | {'ndcg'})
+    def test_ndcg_cut(self):
+        qrel = {
+            'q1': {
+                'd1': 0,
+                'd2': 1,
+                'd3': 0,
+            },
+            'q2': {
+                'd2': 1,
+                'd3': 1,
+            },
+        }
 
+        evaluator = pytrec_eval.RelevanceEvaluator(qrel, {'ndcg_cut.3'})
+
+        self.assertAlmostEqual(
+            evaluator.evaluate({
+                'q1': {
+                    'd1': 1.0,
+                    'd2': 0.0,  # rank 3
+                    'd3': 1.5,
+                },
+                'q2': {},
+            })['q1']['ndcg_cut_3'],
+            0.5)
+
+        evaluator = pytrec_eval.RelevanceEvaluator(qrel, {'ndcg_cut.1'})
+
+        self.assertAlmostEqual(
+            evaluator.evaluate({
+                'q1': {
+                    'd1': 1.0,
+                    'd2': 2.0,  # rank 3
+                    'd3': 1.5,
+                },
+                'q2': {},
+            })['q1']['ndcg_cut_1'],
+            1.0)
+
+        evaluator = pytrec_eval.RelevanceEvaluator(qrel, {'ndcg_cut.1,2,3,1000'})
+        result = evaluator.evaluate({
+                'q1': {
+                    'd1': 1.0,
+                    'd2': 0.0,  # rank 3
+                    'd3': 1.5,
+                },
+                'q2': {},
+            })['q1']
+        self.assertAlmostEqual(result['ndcg_cut_3'], 0.5)
+        self.assertAlmostEqual(result['ndcg_cut_2'], 0.0)
+        self.assertAlmostEqual(result['ndcg_cut_1'], 0.0)
+        self.assertAlmostEqual(result['ndcg_cut_1000'], 0.5)
 
 # TODO(cvangysel): add tests to detect memory leaks.
 class PyTrecEvalIntegrationTest(unittest.TestCase):

@@ -43,6 +43,8 @@ extern RESULTS_FILE_FORMAT te_form_inter_procs[];
 
 #define __DEVELOPMENT false
 
+PARAMS* default_meas_params = NULL;
+
 // Helpers.
 int PyDict_SetItemAndSteal(PyObject* p, PyObject* key, PyObject* val) {
     CHECK(key != Py_None);
@@ -375,6 +377,55 @@ static int RelevanceEvaluator_init(RelevanceEvaluator* self, PyObject* args, PyO
         Py_DECREF(nn_name);
     }
 
+    self->epi_.meas_arg = Malloc(PySet_Size(tmp_measures)+1, MEAS_ARG);
+    self->epi_.meas_arg[0].measure_name = NULL;
+    self->epi_.meas_arg[0].parameters = NULL;
+    size_t meas_arg_idx = 0;
+
+    PyObject* tmp_measures_2 = PySet_New(tmp_measures);
+    PyObject* meas_iter = PyObject_GetIter(tmp_measures_2);
+    PyObject *meas;
+    char* meas_args;
+    char* meas_name;
+    PyObject *arg_sep = PyUnicode_FromString(".");
+    while ((meas = PyIter_Next(meas_iter))) {
+        if (PyUnicode_Contains(meas, arg_sep)) {
+            meas_name = CopyCString(PyUnicode_AsUTF8(meas));
+            meas_args = meas_name;
+            while (*meas_args!='.') meas_args++;
+            *meas_args++ = '\0';
+            self->epi_.meas_arg[meas_arg_idx].measure_name = meas_name;
+            self->epi_.meas_arg[meas_arg_idx].parameters = meas_args;
+            self->epi_.meas_arg[++meas_arg_idx].measure_name = NULL;
+            PySet_Discard(tmp_measures, meas);
+            Py_DECREF(meas);
+            meas = PyUnicode_FromString(meas_name);
+            PySet_Add(tmp_measures, meas);
+        }
+        Py_DECREF(meas);
+    }
+
+    Py_DECREF(meas_iter);
+    Py_DECREF(tmp_measures_2);
+
+    for (size_t nn_idx = 0;
+         nn_idx < te_num_trec_measure_nicknames;
+         ++nn_idx) {
+        PyObject* const nn_name = PyUnicode_FromFormat(
+            "%s", te_trec_measure_nicknames[nn_idx].name);
+
+        if (1 == PySet_Contains(tmp_measures, nn_name)) {
+            measure_idx = 0;
+            while (te_trec_measure_nicknames[nn_idx].name_list[measure_idx] != NULL) {
+                PySet_Add(tmp_measures, PyUnicode_FromFormat("%s", te_trec_measure_nicknames[nn_idx].name_list[measure_idx]));
+                ++measure_idx;
+            }
+            PySet_Discard(tmp_measures, nn_name);
+        }
+
+        Py_DECREF(nn_name);
+    }
+
     for (size_t measure_idx = 0;
          measure_idx < te_num_trec_measures;
          ++measure_idx) {
@@ -461,6 +512,12 @@ static void RelevanceEvaluator_dealloc(RelevanceEvaluator* self) {
 
     delete self->query_id_to_idx_;
     delete self->measures_;
+    size_t i = 0;
+    while (self->epi_.meas_arg[i].measure_name != NULL) {
+        Free(self->epi_.meas_arg[i].measure_name);
+        i++;
+    }
+    Free(self->epi_.meas_arg);
 }
 
 bool query_document_pair_compare(
@@ -521,7 +578,18 @@ static PyObject* RelevanceEvaluator_evaluate(RelevanceEvaluator* self, PyObject*
     for (std::set<size_t>::iterator it = self->measures_->begin();
          it != self->measures_->end(); ++it) {
         const size_t measure_idx = *it;
-
+        // re-apply default arg values
+        if (te_trec_measures[measure_idx]->meas_params != NULL) {
+            Free(te_trec_measures[measure_idx]->meas_params);
+            PARAMS* params = new PARAMS();
+            params->printable_params = default_meas_params[measure_idx].printable_params;
+            params->num_params = default_meas_params[measure_idx].num_params;
+            params->param_values = default_meas_params[measure_idx].param_values;
+            te_trec_measures[measure_idx]->meas_params = params; /* {
+                default_meas_params[measure_idx].printable_params,
+                default_meas_params[measure_idx].num_params,
+                default_meas_params[measure_idx].param_values};*/
+        }
         te_trec_measures[measure_idx]->init_meas(
             &self->epi_,
             te_trec_measures[measure_idx],
@@ -734,6 +802,27 @@ PyMODINIT_FUNC PyInit_pytrec_eval_ext(void) {
     }
 
     PyModule_AddObject(module, "supported_measures", measures);
+
+    // Grab the default meas_params (if not done already). Need to do this because
+    // trec_eval clobbers the references to these if they are ever overwritten.
+    if (default_meas_params == NULL) {
+        default_meas_params = Malloc(te_num_trec_measures, PARAMS);
+        for (int i=0; i<te_num_trec_measures; i++) {
+            if (te_trec_measures[i]->meas_params != NULL) {
+                te_trec_measures[measure_idx]->meas_params;
+                default_meas_params[i] = {
+                    te_trec_measures[i]->meas_params->printable_params,
+                    te_trec_measures[i]->meas_params->num_params,
+                    te_trec_measures[i]->meas_params->param_values
+                };
+                PARAMS* params = new PARAMS();
+                params->printable_params = default_meas_params[i].printable_params;
+                params->num_params = default_meas_params[i].num_params;
+                params->param_values = default_meas_params[i].param_values;
+                te_trec_measures[i]->meas_params = params;
+            }
+        }
+    }
 
     return module;
 }
