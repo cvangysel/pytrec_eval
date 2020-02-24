@@ -294,6 +294,7 @@ bool qrel_docno_compare(
 static int RelevanceEvaluator_init(RelevanceEvaluator* self, PyObject* args, PyObject* kwds) {
     PyObject* object_relevance_per_qid = NULL;
     PyObject* measures = NULL;
+    PyObject* tmp_measures = NULL;
 
     int32 relevance_level = 1;
 
@@ -352,7 +353,27 @@ static int RelevanceEvaluator_init(RelevanceEvaluator* self, PyObject* args, PyO
     self->epi_.meas_arg = NULL;
 
     // Resolve requested measures.
-    Py_INCREF(measures);
+    tmp_measures = PySet_New(measures);
+    Py_INCREF(tmp_measures);
+
+    size_t measure_idx;
+    for (size_t nn_idx = 0;
+         nn_idx < te_num_trec_measure_nicknames;
+         ++nn_idx) {
+        PyObject* const nn_name = PyUnicode_FromFormat(
+            "%s", te_trec_measure_nicknames[nn_idx].name);
+
+        if (1 == PySet_Contains(tmp_measures, nn_name)) {
+            measure_idx = 0;
+            while (te_trec_measure_nicknames[nn_idx].name_list[measure_idx] != NULL) {
+                PySet_Add(tmp_measures, PyUnicode_FromFormat("%s", te_trec_measure_nicknames[nn_idx].name_list[measure_idx]));
+                ++measure_idx;
+            }
+            PySet_Discard(tmp_measures, nn_name);
+        }
+
+        Py_DECREF(nn_name);
+    }
 
     for (size_t measure_idx = 0;
          measure_idx < te_num_trec_measures;
@@ -360,16 +381,16 @@ static int RelevanceEvaluator_init(RelevanceEvaluator* self, PyObject* args, PyO
         PyObject* const measure_name = PyUnicode_FromFormat(
             "%s", te_trec_measures[measure_idx]->name);
 
-        if (1 == PySet_Contains(measures, measure_name)) {
+        if (1 == PySet_Contains(tmp_measures, measure_name)) {
             self->measures_->insert(measure_idx);
         }
 
         Py_DECREF(measure_name);
     }
 
-    const bool invalid_measures = self->measures_->size() != PySet_Size(measures);
+    const bool invalid_measures = self->measures_->size() != PySet_Size(tmp_measures);
 
-    Py_DECREF(measures);
+    Py_DECREF(tmp_measures);
 
     if (invalid_measures) {
         PyErr_SetString(
@@ -638,6 +659,7 @@ static PyModuleDef PyTrecEvalModule = {
     RelevanceEvaluator_methods,
     NULL, NULL, NULL, NULL
 };
+
 
 PyMODINIT_FUNC PyInit_pytrec_eval_ext(void) {
     PyTypeObject RelevanceEvaluatorType_local = {
