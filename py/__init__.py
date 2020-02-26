@@ -62,7 +62,7 @@ class RelevanceEvaluator(_RelevanceEvaluator):
             return {}
         return super().evaluate(scores)
 
-    def _combine_measures(self, measures: Iterable[str]):
+    def _combine_measures(self, measures):
         RE_BASE = r'{}[\._]([0-9]+(\.[0-9]+)?(,[0-9]+(\.[0-9]+)?)*)'
 
         # break apart measures in any of the following formats and combine
