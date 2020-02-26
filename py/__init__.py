@@ -3,7 +3,6 @@
 import re
 import collections
 import numpy as np
-from typing import Dict, Iterable
 
 from pytrec_eval_ext import RelevanceEvaluator as _RelevanceEvaluator
 from pytrec_eval_ext import supported_measures, supported_nicknames
@@ -54,11 +53,11 @@ def compute_aggregated_measure(measure, values):
 
 
 class RelevanceEvaluator(_RelevanceEvaluator):
-    def __init__(self, query_relevance: Dict[str, Dict[str, int]], measures: Iterable[str], relevance_level: int = 1):
+    def __init__(self, query_relevance, measures, relevance_level=1):
         measures = self._combine_measures(measures)
         super().__init__(query_relevance=query_relevance, measures=measures, relevance_level=relevance_level)
 
-    def evaluate(self, scores: Dict[str, Dict[str, float]]):
+    def evaluate(self, scores):
         if not scores:
             return {}
         return super().evaluate(scores)
