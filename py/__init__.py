@@ -54,6 +54,7 @@ def compute_aggregated_measure(measure, values):
 
 class RelevanceEvaluator(_RelevanceEvaluator):
     def __init__(self, query_relevance, measures, relevance_level=1):
+        measures = self._expand_nicknames(measures)
         measures = self._combine_measures(measures)
         super().__init__(query_relevance=query_relevance, measures=measures, relevance_level=relevance_level)
 
@@ -61,6 +62,16 @@ class RelevanceEvaluator(_RelevanceEvaluator):
         if not scores:
             return {}
         return super().evaluate(scores)
+
+    def _expand_nicknames(self, measures):
+        # Expand nicknames (e.g., official, all_trec)
+        result = set()
+        for measure in measures:
+            if measure in supported_nicknames:
+                result.update(supported_nicknames[measure])
+            else:
+                result.add(measure)
+        return result
 
     def _combine_measures(self, measures):
         RE_BASE = r'{}[\._]([0-9]+(\.[0-9]+)?(,[0-9]+(\.[0-9]+)?)*)'

@@ -204,19 +204,20 @@ class RankingBuilder {
 class QrelRankingBuilder : public RankingBuilder<REL_INFO, TEXT_QRELS_INFO, TEXT_QRELS> {
  public:
     virtual void cleanup(const int64 num_queries, REL_INFO* queries) const {
-        for (size_t idx = 0; idx < num_queries; ++idx) {
-            TEXT_QRELS* text_qrels = ((TEXT_QRELS_INFO*) queries[idx].q_rel_info)->text_qrels;
-            size_t r_idx=0;
-            while (text_qrels[r_idx].docno != NULL) {
-                Free(text_qrels[r_idx].docno);
-                ++r_idx;
+        if (num_queries > 0) { // Since Malloc(0) can either return NULL or an empty pointer, need special handling
+            for (size_t idx = 0; idx < num_queries; ++idx) {
+                TEXT_QRELS* text_qrels = ((TEXT_QRELS_INFO*) queries[idx].q_rel_info)->text_qrels;
+                size_t r_idx=0;
+                while (text_qrels[r_idx].docno != NULL) {
+                    Free(text_qrels[r_idx++].docno);
+                }
+                Free(text_qrels);
+                Free(queries[idx].qid);
             }
-            Free(text_qrels);
-            Free(queries[idx].qid);
-        }
 
-        Free(queries->q_rel_info);
-        Free(queries);
+            Free(queries->q_rel_info);
+            Free(queries);
+        }
     }
 
  protected:
@@ -255,18 +256,20 @@ class QrelRankingBuilder : public RankingBuilder<REL_INFO, TEXT_QRELS_INFO, TEXT
 class ResultRankingBuilder : public RankingBuilder<RESULTS, TEXT_RESULTS_INFO, TEXT_RESULTS> {
  public:
     virtual void cleanup(const int64 num_queries, RESULTS* queries) const {
-        for (size_t idx = 0; idx < num_queries; ++idx) {
-            size_t r_idx=0;
-            TEXT_RESULTS* text_results = ((TEXT_RESULTS_INFO*) queries[idx].q_results)->text_results;
-            while (text_results[r_idx].docno != NULL) {
-                Free(text_results[r_idx++].docno);
+        if (num_queries > 0) { // Since Malloc(0) can either return NULL or an empty pointer, need special handling
+            for (size_t idx = 0; idx < num_queries; ++idx) {
+                size_t r_idx=0;
+                TEXT_RESULTS* text_results = ((TEXT_RESULTS_INFO*) queries[idx].q_results)->text_results;
+                while (text_results[r_idx].docno != NULL) {
+                    Free(text_results[r_idx++].docno);
+                }
+                Free(text_results);
+                Free(queries[idx].qid);
             }
-            Free(text_results);
-            Free(queries[idx].qid);
-        }
 
-        Free(queries->q_results);
-        Free(queries);
+            Free(queries->q_results);
+            Free(queries);
+        }
     }
 
  protected:
@@ -371,44 +374,21 @@ static int RelevanceEvaluator_init(RelevanceEvaluator* self, PyObject* args, PyO
     self->epi_.meas_arg = NULL;
 
     // Resolve requested measures.
-    tmp_measures = PySet_New(measures);
-    Py_INCREF(tmp_measures);
-
-    size_t measure_idx;
-    for (size_t nn_idx = 0;
-         nn_idx < te_num_trec_measure_nicknames;
-         ++nn_idx) {
-        PyObject* const nn_name = PyUnicode_FromFormat(
-            "%s", te_trec_measure_nicknames[nn_idx].name);
-
-        if (1 == PySet_Contains(tmp_measures, nn_name)) {
-            measure_idx = 0;
-            while (te_trec_measure_nicknames[nn_idx].name_list[measure_idx] != NULL) {
-                PySet_Add(tmp_measures, PyUnicode_FromFormat("%s", te_trec_measure_nicknames[nn_idx].name_list[measure_idx]));
-                ++measure_idx;
-            }
-            PySet_Discard(tmp_measures, nn_name);
-        }
-
-        Py_DECREF(nn_name);
-    }
-
-    self->epi_.meas_arg = Malloc(PySet_Size(tmp_measures)+1, MEAS_ARG);
+    self->epi_.meas_arg = Malloc(PySet_Size(measures)+1, MEAS_ARG);
     self->epi_.meas_arg[0].measure_name = NULL;
     self->epi_.meas_arg[0].parameters = NULL;
     size_t meas_arg_idx = 0;
 
-    PyObject* tmp_measures_2 = PySet_New(tmp_measures);
-    PyObject* meas_iter = PyObject_GetIter(tmp_measures_2);
+    tmp_measures = PySet_New(measures);
+    PyObject* meas_iter = PyObject_GetIter(measures);
     PyObject *meas;
     char* meas_args;
     char* meas_name;
-    PyObject *arg_sep = PyUnicode_FromString(".");
     while ((meas = PyIter_Next(meas_iter))) {
-        if (PyUnicode_Contains(meas, arg_sep)) {
-            meas_name = CopyCString(PyUnicode_AsUTF8(meas));
-            meas_args = meas_name;
-            while (*meas_args!='.') meas_args++;
+        meas_name = CopyCString(PyUnicode_AsUTF8(meas));
+        meas_args = meas_name;
+        while (*meas_args && *meas_args!='.') meas_args++;
+        if (*meas_args) {
             *meas_args++ = '\0';
             self->epi_.meas_arg[meas_arg_idx].measure_name = meas_name;
             self->epi_.meas_arg[meas_arg_idx].parameters = meas_args;
@@ -418,29 +398,13 @@ static int RelevanceEvaluator_init(RelevanceEvaluator* self, PyObject* args, PyO
             meas = PyUnicode_FromString(meas_name);
             PySet_Add(tmp_measures, meas);
         }
+        else {
+            Free(meas_name);
+        }
         Py_DECREF(meas);
     }
 
     Py_DECREF(meas_iter);
-    Py_DECREF(tmp_measures_2);
-
-    for (size_t nn_idx = 0;
-         nn_idx < te_num_trec_measure_nicknames;
-         ++nn_idx) {
-        PyObject* const nn_name = PyUnicode_FromFormat(
-            "%s", te_trec_measure_nicknames[nn_idx].name);
-
-        if (1 == PySet_Contains(tmp_measures, nn_name)) {
-            measure_idx = 0;
-            while (te_trec_measure_nicknames[nn_idx].name_list[measure_idx] != NULL) {
-                PySet_Add(tmp_measures, PyUnicode_FromFormat("%s", te_trec_measure_nicknames[nn_idx].name_list[measure_idx]));
-                ++measure_idx;
-            }
-            PySet_Discard(tmp_measures, nn_name);
-        }
-
-        Py_DECREF(nn_name);
-    }
 
     for (size_t measure_idx = 0;
          measure_idx < te_num_trec_measures;
@@ -823,14 +787,21 @@ PyMODINIT_FUNC PyInit_pytrec_eval_ext(void) {
 
     PyModule_AddObject(module, "supported_measures", measures);
 
-    // Add set of all supported nicknames.
-    PyObject* const nicknames = PySet_New(NULL);
+    // Add set of dict of supported nicknames -> set of measures.
+    PyObject* const nicknames = PyDict_New();
 
     size_t nn_idx;
-    for (nn_idx=0; nn_idx<=te_num_trec_measure_nicknames; nn_idx++) {
-        PySet_Add(
+    for (nn_idx=0; nn_idx<te_num_trec_measure_nicknames; nn_idx++) {
+        PyObject* nn_measures = PySet_New(NULL);
+        size_t measure_idx = 0;
+        while (te_trec_measure_nicknames[nn_idx].name_list[measure_idx] != NULL) {
+            PySet_Add(nn_measures, PyUnicode_FromString(te_trec_measure_nicknames[nn_idx].name_list[measure_idx]));
+            ++measure_idx;
+        }
+        PyDict_SetItemAndSteal(
             nicknames,
-            PyUnicode_FromFormat("%s", te_trec_measure_nicknames[nn_idx].name));
+            PyUnicode_FromString(te_trec_measure_nicknames[nn_idx].name),
+            nn_measures);
     }
 
     PyModule_AddObject(module, "supported_nicknames", nicknames);
