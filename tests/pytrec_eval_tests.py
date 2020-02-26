@@ -121,7 +121,6 @@ class PyTrecEvalUnitTest(unittest.TestCase):
             })['q1']['ndcg'],
             0.6309297535714575)
 
-
     def test_nicknames(self):
         qrel = {
             'q1': {
@@ -168,6 +167,7 @@ class PyTrecEvalUnitTest(unittest.TestCase):
                 'q2': {}
             })['q1'].keys()),
             official_metrics | set_metrics | {'ndcg'})
+
     def test_ndcg_cut(self):
         qrel = {
             'q1': {
@@ -220,6 +220,80 @@ class PyTrecEvalUnitTest(unittest.TestCase):
         self.assertAlmostEqual(result['ndcg_cut_2'], 0.0)
         self.assertAlmostEqual(result['ndcg_cut_1'], 0.0)
         self.assertAlmostEqual(result['ndcg_cut_1000'], 0.5)
+
+    def test_empty(self):
+        qrel = {
+            'q1': {
+                'd1': 0,
+                'd2': 1,
+                'd3': 0,
+            },
+            'q2': {
+                'd2': 1,
+                'd3': 1,
+            },
+        }
+        run = {
+            'q1': {
+                'd1': 1.0,
+                'd2': 0.0,
+                'd3': 1.5,
+            },
+            'q2': {},
+        }
+
+        # empty run
+        evaluator = pytrec_eval.RelevanceEvaluator(qrel, {'map', 'ndcg'})
+        self.assertEqual(evaluator.evaluate({}), {})
+
+        # empty metrics
+        evaluator = pytrec_eval.RelevanceEvaluator(qrel, set())
+        self.assertEqual(evaluator.evaluate(run), {'q1': {}, 'q2': {}})
+
+        # empty qrels
+        evaluator = pytrec_eval.RelevanceEvaluator({}, {'map', 'ndcg'})
+        self.assertEqual(evaluator.evaluate(run), {})
+
+        # empty qrels and run
+        evaluator = pytrec_eval.RelevanceEvaluator({}, {'map', 'ndcg'})
+        self.assertEqual(evaluator.evaluate({}), {})
+
+        # empty metrics and run
+        evaluator = pytrec_eval.RelevanceEvaluator(qrel, set())
+        self.assertEqual(evaluator.evaluate({}), {})
+
+        # empty qrels and metrics
+        evaluator = pytrec_eval.RelevanceEvaluator({}, set())
+        self.assertEqual(evaluator.evaluate(run), {})
+
+        # empty everything
+        evaluator = pytrec_eval.RelevanceEvaluator({}, {})
+        self.assertEqual(evaluator.evaluate({}), {})
+
+    def test_measure_params(self):
+        qrel = {
+            'q1': {
+                'd1': 0,
+                'd2': 1,
+                'd3': 0,
+            },
+            'q2': {
+                'd2': 1,
+                'd3': 1,
+            },
+        }
+        run = {
+            'q1': {
+                'd1': 1.0,
+                'd2': 0.0,
+                'd3': 1.5,
+            },
+            'q2': {},
+        }
+
+        # empty run
+        evaluator = pytrec_eval.RelevanceEvaluator(qrel, ['ndcg_cut', 'ndcg_cut.1,4', 'ndcg_cut_20,4', 'ndcg_cut_15', 'recall.1000', 'P'])
+        self.assertEqual(set(evaluator.evaluate(run)['q1'].keys()), {'ndcg_cut_1', 'ndcg_cut_4', 'ndcg_cut_15', 'ndcg_cut_20', 'recall_1000', 'P_200', 'P_15', 'P_10', 'P_5', 'P_30', 'P_100', 'P_20', 'P_500', 'P_1000'})
 
 # TODO(cvangysel): add tests to detect memory leaks.
 class PyTrecEvalIntegrationTest(unittest.TestCase):
@@ -278,6 +352,7 @@ def generate_traditional_test(run_filename,
                                    msg=measure)
 
     return __test
+
 
 if __name__ == '__main__':
     assert os.path.isdir(TREC_EVAL_TEST_DIR), \

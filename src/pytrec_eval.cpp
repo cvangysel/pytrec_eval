@@ -71,6 +71,9 @@ static PyTypeObject RelevanceEvaluatorType;
 typedef struct {
     PyObject_HEAD
 
+    // whether init has been successfully called
+    bool inited_;
+
     // Original dictionary with relevance information.
     PyObject* object_relevance_per_qid_;
 
@@ -90,6 +93,7 @@ static PyObject* RelevanceEvaluator_new(PyTypeObject* type, PyObject* args, PyOb
 
     self = (RelevanceEvaluator*) type->tp_alloc(type, 0);
     if (self != NULL) {
+        self->inited_ = false;
         self->object_relevance_per_qid_ = NULL;
         self->query_id_to_idx_ = new std::map<std::string, size_t>;
         self->measures_ = new std::set<size_t>;
@@ -492,6 +496,8 @@ static int RelevanceEvaluator_init(RelevanceEvaluator* self, PyObject* args, PyO
         self->query_id_to_idx_->insert(std::pair<std::string, size_t>(qid, query_idx));
     }
 
+    self->inited_ = true;
+
     return NULL;
 }
 
@@ -512,12 +518,14 @@ static void RelevanceEvaluator_dealloc(RelevanceEvaluator* self) {
 
     delete self->query_id_to_idx_;
     delete self->measures_;
-    size_t i = 0;
-    while (self->epi_.meas_arg[i].measure_name != NULL) {
-        Free(self->epi_.meas_arg[i].measure_name);
-        i++;
+    if (self->inited_) {
+        size_t i = 0;
+        while (self->epi_.meas_arg[i].measure_name != NULL) {
+            Free(self->epi_.meas_arg[i].measure_name);
+            i++;
+        }
+        Free(self->epi_.meas_arg);
     }
-    Free(self->epi_.meas_arg);
 }
 
 bool query_document_pair_compare(
@@ -802,6 +810,18 @@ PyMODINIT_FUNC PyInit_pytrec_eval_ext(void) {
     }
 
     PyModule_AddObject(module, "supported_measures", measures);
+
+    // Add set of all supported nicknames.
+    PyObject* const nicknames = PySet_New(NULL);
+
+    size_t nn_idx;
+    for (nn_idx=0; nn_idx<=te_num_trec_measure_nicknames; nn_idx++) {
+        PySet_Add(
+            nicknames,
+            PyUnicode_FromFormat("%s", te_trec_measure_nicknames[nn_idx].name));
+    }
+
+    PyModule_AddObject(module, "supported_nicknames", nicknames);
 
     // Grab the default meas_params (if not done already). Need to do this because
     // trec_eval clobbers the references to these if they are ever overwritten.
