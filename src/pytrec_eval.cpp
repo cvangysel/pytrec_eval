@@ -138,12 +138,10 @@ class RankingBuilder {
                 return false;
             }
 
-            Py_INCREF(key);
-
             queries[query_idx].qid = CopyCString(PyUnicode_AsUTF8(key));
             CHECK_NOTNULL(queries[query_idx].qid);
 
-            PairT* const query_document_pairs = Malloc(PyDict_Size(value), PairT);
+            PairT* const query_document_pairs = Malloc(PyDict_Size(value) + 1, PairT);
 
             PyObject* inner_key = NULL;
             PyObject* inner_value = NULL;
@@ -169,6 +167,7 @@ class RankingBuilder {
 
                 ++pair_idx;
             }
+            query_document_pairs[pair_idx].docno = NULL;
 
             if (!ProcessListOfQueryDocumentPairs(&query_pair_list[query_idx],
                                                  PyDict_Size(value),
@@ -206,7 +205,14 @@ class QrelRankingBuilder : public RankingBuilder<REL_INFO, TEXT_QRELS_INFO, TEXT
  public:
     virtual void cleanup(const int64 num_queries, REL_INFO* queries) const {
         for (size_t idx = 0; idx < num_queries; ++idx) {
-            Free(((TEXT_QRELS_INFO*) queries[idx].q_rel_info)->text_qrels);
+            TEXT_QRELS* text_qrels = ((TEXT_QRELS_INFO*) queries[idx].q_rel_info)->text_qrels;
+            size_t r_idx=0;
+            while (text_qrels[r_idx].docno != NULL) {
+                Free(text_qrels[r_idx].docno);
+                ++r_idx;
+            }
+            Free(text_qrels);
+            Free(queries[idx].qid);
         }
 
         Free(queries->q_rel_info);
@@ -250,7 +256,13 @@ class ResultRankingBuilder : public RankingBuilder<RESULTS, TEXT_RESULTS_INFO, T
  public:
     virtual void cleanup(const int64 num_queries, RESULTS* queries) const {
         for (size_t idx = 0; idx < num_queries; ++idx) {
-            Free(((TEXT_RESULTS_INFO*) queries[idx].q_results)->text_results);
+            size_t r_idx=0;
+            TEXT_RESULTS* text_results = ((TEXT_RESULTS_INFO*) queries[idx].q_results)->text_results;
+            while (text_results[r_idx].docno != NULL) {
+                Free(text_results[r_idx++].docno);
+            }
+            Free(text_results);
+            Free(queries[idx].qid);
         }
 
         Free(queries->q_results);
