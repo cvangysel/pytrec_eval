@@ -43,6 +43,8 @@ extern RESULTS_FILE_FORMAT te_form_inter_procs[];
 
 #define __DEVELOPMENT false
 
+PARAMS* default_meas_params = NULL;
+
 // Helpers.
 int PyDict_SetItemAndSteal(PyObject* p, PyObject* key, PyObject* val) {
     CHECK(key != Py_None);
@@ -69,6 +71,9 @@ static PyTypeObject RelevanceEvaluatorType;
 typedef struct {
     PyObject_HEAD
 
+    // whether init has been successfully called
+    bool inited_;
+
     // Original dictionary with relevance information.
     PyObject* object_relevance_per_qid_;
 
@@ -88,6 +93,7 @@ static PyObject* RelevanceEvaluator_new(PyTypeObject* type, PyObject* args, PyOb
 
     self = (RelevanceEvaluator*) type->tp_alloc(type, 0);
     if (self != NULL) {
+        self->inited_ = false;
         self->object_relevance_per_qid_ = NULL;
         self->query_id_to_idx_ = new std::map<std::string, size_t>;
         self->measures_ = new std::set<size_t>;
@@ -132,12 +138,10 @@ class RankingBuilder {
                 return false;
             }
 
-            Py_INCREF(key);
-
             queries[query_idx].qid = CopyCString(PyUnicode_AsUTF8(key));
             CHECK_NOTNULL(queries[query_idx].qid);
 
-            PairT* const query_document_pairs = Malloc(PyDict_Size(value), PairT);
+            PairT* const query_document_pairs = Malloc(PyDict_Size(value) + 1, PairT);
 
             PyObject* inner_key = NULL;
             PyObject* inner_value = NULL;
@@ -163,6 +167,7 @@ class RankingBuilder {
 
                 ++pair_idx;
             }
+            query_document_pairs[pair_idx].docno = NULL;
 
             if (!ProcessListOfQueryDocumentPairs(&query_pair_list[query_idx],
                                                  PyDict_Size(value),
@@ -199,12 +204,20 @@ class RankingBuilder {
 class QrelRankingBuilder : public RankingBuilder<REL_INFO, TEXT_QRELS_INFO, TEXT_QRELS> {
  public:
     virtual void cleanup(const int64 num_queries, REL_INFO* queries) const {
-        for (size_t idx = 0; idx < num_queries; ++idx) {
-            Free(((TEXT_QRELS_INFO*) queries[idx].q_rel_info)->text_qrels);
-        }
+        if (num_queries > 0) { // Since Malloc(0) can either return NULL or an empty pointer, need special handling
+            for (size_t idx = 0; idx < num_queries; ++idx) {
+                TEXT_QRELS* text_qrels = ((TEXT_QRELS_INFO*) queries[idx].q_rel_info)->text_qrels;
+                size_t r_idx=0;
+                while (text_qrels[r_idx].docno != NULL) {
+                    Free(text_qrels[r_idx++].docno);
+                }
+                Free(text_qrels);
+                Free(queries[idx].qid);
+            }
 
-        Free(queries->q_rel_info);
-        Free(queries);
+            Free(queries->q_rel_info);
+            Free(queries);
+        }
     }
 
  protected:
@@ -243,12 +256,20 @@ class QrelRankingBuilder : public RankingBuilder<REL_INFO, TEXT_QRELS_INFO, TEXT
 class ResultRankingBuilder : public RankingBuilder<RESULTS, TEXT_RESULTS_INFO, TEXT_RESULTS> {
  public:
     virtual void cleanup(const int64 num_queries, RESULTS* queries) const {
-        for (size_t idx = 0; idx < num_queries; ++idx) {
-            Free(((TEXT_RESULTS_INFO*) queries[idx].q_results)->text_results);
-        }
+        if (num_queries > 0) { // Since Malloc(0) can either return NULL or an empty pointer, need special handling
+            for (size_t idx = 0; idx < num_queries; ++idx) {
+                size_t r_idx=0;
+                TEXT_RESULTS* text_results = ((TEXT_RESULTS_INFO*) queries[idx].q_results)->text_results;
+                while (text_results[r_idx].docno != NULL) {
+                    Free(text_results[r_idx++].docno);
+                }
+                Free(text_results);
+                Free(queries[idx].qid);
+            }
 
-        Free(queries->q_results);
-        Free(queries);
+            Free(queries->q_results);
+            Free(queries);
+        }
     }
 
  protected:
@@ -294,6 +315,7 @@ bool qrel_docno_compare(
 static int RelevanceEvaluator_init(RelevanceEvaluator* self, PyObject* args, PyObject* kwds) {
     PyObject* object_relevance_per_qid = NULL;
     PyObject* measures = NULL;
+    PyObject* tmp_measures = NULL;
 
     int32 relevance_level = 1;
 
@@ -352,7 +374,37 @@ static int RelevanceEvaluator_init(RelevanceEvaluator* self, PyObject* args, PyO
     self->epi_.meas_arg = NULL;
 
     // Resolve requested measures.
-    Py_INCREF(measures);
+    self->epi_.meas_arg = Malloc(PySet_Size(measures)+1, MEAS_ARG);
+    self->epi_.meas_arg[0].measure_name = NULL;
+    self->epi_.meas_arg[0].parameters = NULL;
+    size_t meas_arg_idx = 0;
+
+    tmp_measures = PySet_New(measures);
+    PyObject* meas_iter = PyObject_GetIter(measures);
+    PyObject *meas;
+    char* meas_args;
+    char* meas_name;
+    while ((meas = PyIter_Next(meas_iter))) {
+        meas_name = CopyCString(PyUnicode_AsUTF8(meas));
+        meas_args = meas_name;
+        while (*meas_args && *meas_args!='.') meas_args++;
+        if (*meas_args) {
+            *meas_args++ = '\0';
+            self->epi_.meas_arg[meas_arg_idx].measure_name = meas_name;
+            self->epi_.meas_arg[meas_arg_idx].parameters = meas_args;
+            self->epi_.meas_arg[++meas_arg_idx].measure_name = NULL;
+            PySet_Discard(tmp_measures, meas);
+            Py_DECREF(meas);
+            meas = PyUnicode_FromString(meas_name);
+            PySet_Add(tmp_measures, meas);
+        }
+        else {
+            Free(meas_name);
+        }
+        Py_DECREF(meas);
+    }
+
+    Py_DECREF(meas_iter);
 
     for (size_t measure_idx = 0;
          measure_idx < te_num_trec_measures;
@@ -360,16 +412,16 @@ static int RelevanceEvaluator_init(RelevanceEvaluator* self, PyObject* args, PyO
         PyObject* const measure_name = PyUnicode_FromFormat(
             "%s", te_trec_measures[measure_idx]->name);
 
-        if (1 == PySet_Contains(measures, measure_name)) {
+        if (1 == PySet_Contains(tmp_measures, measure_name)) {
             self->measures_->insert(measure_idx);
         }
 
         Py_DECREF(measure_name);
     }
 
-    const bool invalid_measures = self->measures_->size() != PySet_Size(measures);
+    const bool invalid_measures = self->measures_->size() != PySet_Size(tmp_measures);
 
-    Py_DECREF(measures);
+    Py_DECREF(tmp_measures);
 
     if (invalid_measures) {
         PyErr_SetString(
@@ -420,6 +472,8 @@ static int RelevanceEvaluator_init(RelevanceEvaluator* self, PyObject* args, PyO
         self->query_id_to_idx_->insert(std::pair<std::string, size_t>(qid, query_idx));
     }
 
+    self->inited_ = true;
+
     return NULL;
 }
 
@@ -440,6 +494,14 @@ static void RelevanceEvaluator_dealloc(RelevanceEvaluator* self) {
 
     delete self->query_id_to_idx_;
     delete self->measures_;
+    if (self->inited_) {
+        size_t i = 0;
+        while (self->epi_.meas_arg[i].measure_name != NULL) {
+            Free(self->epi_.meas_arg[i].measure_name);
+            i++;
+        }
+        Free(self->epi_.meas_arg);
+    }
 }
 
 bool query_document_pair_compare(
@@ -500,7 +562,18 @@ static PyObject* RelevanceEvaluator_evaluate(RelevanceEvaluator* self, PyObject*
     for (std::set<size_t>::iterator it = self->measures_->begin();
          it != self->measures_->end(); ++it) {
         const size_t measure_idx = *it;
-
+        // re-apply default arg values
+        if (te_trec_measures[measure_idx]->meas_params != NULL) {
+            Free(te_trec_measures[measure_idx]->meas_params);
+            PARAMS* params = new PARAMS();
+            params->printable_params = default_meas_params[measure_idx].printable_params;
+            params->num_params = default_meas_params[measure_idx].num_params;
+            params->param_values = default_meas_params[measure_idx].param_values;
+            te_trec_measures[measure_idx]->meas_params = params; /* {
+                default_meas_params[measure_idx].printable_params,
+                default_meas_params[measure_idx].num_params,
+                default_meas_params[measure_idx].param_values};*/
+        }
         te_trec_measures[measure_idx]->init_meas(
             &self->epi_,
             te_trec_measures[measure_idx],
@@ -639,6 +712,7 @@ static PyModuleDef PyTrecEvalModule = {
     NULL, NULL, NULL, NULL
 };
 
+
 PyMODINIT_FUNC PyInit_pytrec_eval_ext(void) {
     PyTypeObject RelevanceEvaluatorType_local = {
         PyVarObject_HEAD_INIT(NULL, 0)
@@ -712,6 +786,46 @@ PyMODINIT_FUNC PyInit_pytrec_eval_ext(void) {
     }
 
     PyModule_AddObject(module, "supported_measures", measures);
+
+    // Add set of dict of supported nicknames -> set of measures.
+    PyObject* const nicknames = PyDict_New();
+
+    size_t nn_idx;
+    for (nn_idx=0; nn_idx<te_num_trec_measure_nicknames; nn_idx++) {
+        PyObject* nn_measures = PySet_New(NULL);
+        size_t measure_idx = 0;
+        while (te_trec_measure_nicknames[nn_idx].name_list[measure_idx] != NULL) {
+            PySet_Add(nn_measures, PyUnicode_FromString(te_trec_measure_nicknames[nn_idx].name_list[measure_idx]));
+            ++measure_idx;
+        }
+        PyDict_SetItemAndSteal(
+            nicknames,
+            PyUnicode_FromString(te_trec_measure_nicknames[nn_idx].name),
+            nn_measures);
+    }
+
+    PyModule_AddObject(module, "supported_nicknames", nicknames);
+
+    // Grab the default meas_params (if not done already). Need to do this because
+    // trec_eval clobbers the references to these if they are ever overwritten.
+    if (default_meas_params == NULL) {
+        default_meas_params = Malloc(te_num_trec_measures, PARAMS);
+        for (int i=0; i<te_num_trec_measures; i++) {
+            if (te_trec_measures[i]->meas_params != NULL) {
+                te_trec_measures[measure_idx]->meas_params;
+                default_meas_params[i] = {
+                    te_trec_measures[i]->meas_params->printable_params,
+                    te_trec_measures[i]->meas_params->num_params,
+                    te_trec_measures[i]->meas_params->param_values
+                };
+                PARAMS* params = new PARAMS();
+                params->printable_params = default_meas_params[i].printable_params;
+                params->num_params = default_meas_params[i].num_params;
+                params->param_values = default_meas_params[i].param_values;
+                te_trec_measures[i]->meas_params = params;
+            }
+        }
+    }
 
     return module;
 }
