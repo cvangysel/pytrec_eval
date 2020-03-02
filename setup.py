@@ -60,7 +60,7 @@ with tempfile.TemporaryDirectory() as tmp_dir:
           package_dir={'pytrec_eval': 'py'},
           python_requires='>=3',
           url='https://github.com/cvangysel/pytrec_eval',
-          download_url='https://github.com/cvangysel/pytrec_eval/tarball/0.4',
+          download_url='https://github.com/cvangysel/pytrec_eval/tarball/0.5',
           keywords=[
               'trec_eval',
               'information retrieval',
