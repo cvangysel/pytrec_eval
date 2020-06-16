@@ -21,16 +21,16 @@ extern "C" int te_form_res_rels_cleanup();
 #include <set>
 #include <string>
 
-extern int te_num_trec_measures;
-extern TREC_MEAS* te_trec_measures[];
-extern int te_num_trec_measure_nicknames;
-extern TREC_MEASURE_NICKNAMES te_trec_measure_nicknames[];
-extern int te_num_rel_info_format;
-extern REL_INFO_FILE_FORMAT te_rel_info_format[];
-extern int te_num_results_format;
-extern RESULTS_FILE_FORMAT te_results_format[];
-extern int te_num_form_inter_procs;
-extern RESULTS_FILE_FORMAT te_form_inter_procs[];
+extern "C" int te_num_trec_measures;
+extern "C" TREC_MEAS* te_trec_measures[];
+extern "C" int te_num_trec_measure_nicknames;
+extern "C" TREC_MEASURE_NICKNAMES te_trec_measure_nicknames[];
+extern "C" int te_num_rel_info_format;
+extern "C" REL_INFO_FILE_FORMAT te_rel_info_format[];
+extern "C" int te_num_results_format;
+extern "C" RESULTS_FILE_FORMAT te_results_format[];
+extern "C" int te_num_form_inter_procs;
+extern "C" RESULTS_FILE_FORMAT te_form_inter_procs[];
 
 #define CHECK(condition) assert(condition)
 #define CHECK_EQ(first, second) assert(first == second)
