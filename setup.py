@@ -4,7 +4,7 @@ from distutils.core import setup, Extension
 import os
 import tempfile
 
-REMOTE_TREC_EVAL_ZIP = 'http://www.dcs.gla.ac.uk/~craigm/trec_eval.9.0.7.tar.gz'
+REMOTE_TREC_EVAL_ZIP = 'http://www.dcs.gla.ac.uk/~craigm/trec_eval.9.0.7.zip'
 
 REMOTE_TREC_EVAL_ZIP_DIRNAME = 'trec_eval.9.0.5'
 
