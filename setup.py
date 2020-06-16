@@ -4,10 +4,9 @@ from distutils.core import setup, Extension
 import os
 import tempfile
 
-REMOTE_TREC_EVAL_ZIP = 'https://github.com/usnistgov/' \
-                       'trec_eval/archive/v9.0.5.zip'
+REMOTE_TREC_EVAL_ZIP = 'http://www.dcs.gla.ac.uk/~craigm/trec_eval.9.0.7.tar.gz'
 
-REMOTE_TREC_EVAL_ZIP_DIRNAME = 'trec_eval-9.0.5'
+REMOTE_TREC_EVAL_ZIP_DIRNAME = 'trec_eval.9.0.5'
 
 LOCAL_TREC_EVAL_DIR = os.path.realpath(
     os.path.join(__file__, '..', 'trec_eval'))
