@@ -557,8 +557,11 @@ static PyObject* RelevanceEvaluator_evaluate(RelevanceEvaluator* self, PyObject*
     all_results.results = queries;
 
     TREC_EVAL accum_eval;
+#ifdef _MSC_VER
     accum_eval = TREC_EVAL {"all", 0, NULL, 0, 0};
-
+#else
+    accum_eval = (TREC_EVAL) {"all", 0, NULL, 0, 0};
+#endif
     for (std::set<size_t>::iterator it = self->measures_->begin();
          it != self->measures_->end(); ++it) {
         const size_t measure_idx = *it;
@@ -813,7 +816,7 @@ PyMODINIT_FUNC PyInit_pytrec_eval_ext(void) {
         for (int i=0; i<te_num_trec_measures; i++) {
             if (te_trec_measures[i]->meas_params != NULL) {
                 te_trec_measures[measure_idx]->meas_params;
-                default_meas_params[i] = {
+                default_meas_params[i] = (PARAMS) {
                     te_trec_measures[i]->meas_params->printable_params,
                     te_trec_measures[i]->meas_params->num_params,
                     te_trec_measures[i]->meas_params->param_values
