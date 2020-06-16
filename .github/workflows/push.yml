@@ -47,7 +47,15 @@ jobs:
         python setup.py bdist
         pip install --timeout=120 .
         
-    - name: Test with pytest
+    - name: Test-unix with pytest
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOs-latest'
       run: |
         pip install pytest
         pytest tests/*.py
+
+    - name: Test-windows with pytest
+      if: matrix.os == 'windows-latest'
+      shell: cmd
+      run: |
+        pip install pytest
+        pytest tests\*.py
