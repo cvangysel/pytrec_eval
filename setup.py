@@ -36,6 +36,11 @@ with tempfile.TemporaryDirectory() as tmp_dir:
     for filename in os.listdir(trec_eval_dir):
         if filename.endswith('.c') and not filename == "trec_eval.c":
             TREC_EVAL_SRC.append(os.path.join(trec_eval_dir, filename))
+    #include the windows/ subdirectory on windows machines
+    if sys.platform == 'win32':
+        for filename in os.listdir(os.path.join(trec_eval_dir, "windows")):
+            if filename.endswith('.c') and not filename == "trec_eval.c":
+                TREC_EVAL_SRC.append(os.path.join(trec_eval_dir, filename))
 
     pytrec_eval_ext = Extension(
         'pytrec_eval_ext',
