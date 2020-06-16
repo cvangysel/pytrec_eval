@@ -33,7 +33,7 @@ with tempfile.TemporaryDirectory() as tmp_dir:
         trec_eval_dir = os.path.join(tmp_dir, REMOTE_TREC_EVAL_ZIP_DIRNAME)
 
     for filename in os.listdir(trec_eval_dir):
-        if filename.endswith('.c'):
+        if filename.endswith('.c') and not filename == "trec_eval.c":
             TREC_EVAL_SRC.append(os.path.join(trec_eval_dir, filename))
 
     pytrec_eval_ext = Extension(
