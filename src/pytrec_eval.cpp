@@ -816,7 +816,11 @@ PyMODINIT_FUNC PyInit_pytrec_eval_ext(void) {
         for (int i=0; i<te_num_trec_measures; i++) {
             if (te_trec_measures[i]->meas_params != NULL) {
                 te_trec_measures[measure_idx]->meas_params;
+#ifdef _MSC_VER                
+                default_meas_params[i] = PARAMS {
+#else 
                 default_meas_params[i] = (PARAMS) {
+#endif
                     te_trec_measures[i]->meas_params->printable_params,
                     te_trec_measures[i]->meas_params->num_params,
                     te_trec_measures[i]->meas_params->param_values
