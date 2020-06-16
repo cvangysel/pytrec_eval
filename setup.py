@@ -2,6 +2,7 @@
 
 from distutils.core import setup, Extension
 import os
+import sys
 import tempfile
 
 REMOTE_TREC_EVAL_ZIP = 'http://www.dcs.gla.ac.uk/~craigm/trec_eval.9.0.7.zip'
@@ -39,7 +40,8 @@ with tempfile.TemporaryDirectory() as tmp_dir:
     pytrec_eval_ext = Extension(
         'pytrec_eval_ext',
         sources=['src/pytrec_eval.cpp'] + TREC_EVAL_SRC,
-        libraries=['m', 'stdc++'],
+        #windows doesnt need libm
+        libraries=['stdc++'] if sys.platform == 'win32' else ['m', 'stdc++'],
         include_dirs=[trec_eval_dir],
         undef_macros=['NDEBUG'],
         extra_compile_args=['-g', '-Wall', '-O3'],
