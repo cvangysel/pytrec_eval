@@ -58,4 +58,4 @@ jobs:
       shell: cmd
       run: |
         pip install pytest
-        pytest tests\*.py
+        pytest tests\pytrec_eval_tests.py
