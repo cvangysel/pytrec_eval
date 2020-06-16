@@ -557,7 +557,7 @@ static PyObject* RelevanceEvaluator_evaluate(RelevanceEvaluator* self, PyObject*
     all_results.results = queries;
 
     TREC_EVAL accum_eval;
-    accum_eval = (TREC_EVAL) {"all", 0, NULL, 0, 0};
+    accum_eval = TREC_EVAL {"all", 0, NULL, 0, 0};
 
     for (std::set<size_t>::iterator it = self->measures_->begin();
          it != self->measures_->end(); ++it) {
