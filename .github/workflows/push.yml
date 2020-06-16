@@ -41,17 +41,11 @@ jobs:
         python setup.py bdist
         pip install --timeout=120 -vv .
 
-    - name: install-linux
-      if: matrix.os == 'ubuntu-latest'
+    - name: install-unix
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOs-latest'
       run: |
         python setup.py bdist
         pip install --timeout=120 .
-
-    - name: install-osx
-      if: matrix.os == 'macOs-latest'
-      run: |
-        python setup.py bdist
-        pip install --timeout=120 --user .
         
     - name: Test with pytest
       run: |
