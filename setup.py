@@ -41,7 +41,7 @@ with tempfile.TemporaryDirectory() as tmp_dir:
         'pytrec_eval_ext',
         sources=['src/pytrec_eval.cpp'] + TREC_EVAL_SRC,
         #windows doesnt need libm
-        libraries=['stdc++'] if sys.platform == 'win32' else ['m', 'stdc++'],
+        libraries=[''] if sys.platform == 'win32' else ['m', 'stdc++'],
         include_dirs=[trec_eval_dir],
         undef_macros=['NDEBUG'],
         extra_compile_args=['-g', '-Wall', '-O3'],
