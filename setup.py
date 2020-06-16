@@ -40,14 +40,14 @@ with tempfile.TemporaryDirectory() as tmp_dir:
     if sys.platform == 'win32':
         for filename in os.listdir(os.path.join(trec_eval_dir, "windows")):
             if filename.endswith('.c') and not filename == "trec_eval.c":
-                TREC_EVAL_SRC.append(os.path.join(trec_eval_dir, filename))
+                TREC_EVAL_SRC.append(os.path.join(trec_eval_dir, "windows", filename))
 
     pytrec_eval_ext = Extension(
         'pytrec_eval_ext',
         sources=['src/pytrec_eval.cpp'] + TREC_EVAL_SRC,
         #windows doesnt need libm
         libraries=[] if sys.platform == 'win32' else ['m', 'stdc++'],
-        include_dirs=[trec_eval_dir],
+        include_dirs=[trec_eval_dir, os.path.join(trec_eval_dir, "windows")] if sys.platform == 'win32' else [trec_eval_dir],
         undef_macros=['NDEBUG'],
         extra_compile_args=['-g', '-Wall', '-O3'],
         define_macros=[('VERSIONID', '\"pytrec_eval\"'),
