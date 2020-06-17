@@ -33,6 +33,7 @@ extern "C" int te_num_form_inter_procs;
 extern "C" RESULTS_FILE_FORMAT te_form_inter_procs[];
 
 #define CHECK(condition) assert(condition)
+#define CHECK_STR_EQ(first, second) assert( std::string(first).compare(std::string(second)) == 0)
 #define CHECK_EQ(first, second) assert(first == second)
 #define CHECK_GT(first, second) assert(first > second)
 #define CHECK_GE(first, second) assert(first >= second)
@@ -773,7 +774,7 @@ PyMODINIT_FUNC PyInit_pytrec_eval_ext(void) {
     Py_INCREF(&RelevanceEvaluatorType);
     PyModule_AddObject(module, "RelevanceEvaluator", (PyObject*) &RelevanceEvaluatorType);
 
-    CHECK_EQ(te_trec_measure_nicknames[2].name, "all_trec");
+    CHECK_STR_EQ(te_trec_measure_nicknames[2].name, "all_trec");
 
     // Add set of all supported relevance measures.
     PyObject* const measures = PySet_New(NULL);
