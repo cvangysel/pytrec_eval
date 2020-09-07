@@ -21,18 +21,19 @@ extern "C" int te_form_res_rels_cleanup();
 #include <set>
 #include <string>
 
-extern int te_num_trec_measures;
-extern TREC_MEAS* te_trec_measures[];
-extern int te_num_trec_measure_nicknames;
-extern TREC_MEASURE_NICKNAMES te_trec_measure_nicknames[];
-extern int te_num_rel_info_format;
-extern REL_INFO_FILE_FORMAT te_rel_info_format[];
-extern int te_num_results_format;
-extern RESULTS_FILE_FORMAT te_results_format[];
-extern int te_num_form_inter_procs;
-extern RESULTS_FILE_FORMAT te_form_inter_procs[];
+extern "C" int te_num_trec_measures;
+extern "C" TREC_MEAS* te_trec_measures[];
+extern "C" int te_num_trec_measure_nicknames;
+extern "C" TREC_MEASURE_NICKNAMES te_trec_measure_nicknames[];
+extern "C" int te_num_rel_info_format;
+extern "C" REL_INFO_FILE_FORMAT te_rel_info_format[];
+extern "C" int te_num_results_format;
+extern "C" RESULTS_FILE_FORMAT te_results_format[];
+extern "C" int te_num_form_inter_procs;
+extern "C" RESULTS_FILE_FORMAT te_form_inter_procs[];
 
 #define CHECK(condition) assert(condition)
+#define CHECK_STR_EQ(first, second) assert( std::string(first).compare(std::string(second)) == 0)
 #define CHECK_EQ(first, second) assert(first == second)
 #define CHECK_GT(first, second) assert(first > second)
 #define CHECK_GE(first, second) assert(first >= second)
@@ -557,8 +558,11 @@ static PyObject* RelevanceEvaluator_evaluate(RelevanceEvaluator* self, PyObject*
     all_results.results = queries;
 
     TREC_EVAL accum_eval;
+#ifdef _MSC_VER
+    accum_eval = TREC_EVAL {"all", 0, NULL, 0, 0};
+#else
     accum_eval = (TREC_EVAL) {"all", 0, NULL, 0, 0};
-
+#endif
     for (std::set<size_t>::iterator it = self->measures_->begin();
          it != self->measures_->end(); ++it) {
         const size_t measure_idx = *it;
@@ -770,7 +774,7 @@ PyMODINIT_FUNC PyInit_pytrec_eval_ext(void) {
     Py_INCREF(&RelevanceEvaluatorType);
     PyModule_AddObject(module, "RelevanceEvaluator", (PyObject*) &RelevanceEvaluatorType);
 
-    CHECK_EQ(te_trec_measure_nicknames[2].name, "all_trec");
+    CHECK_STR_EQ(te_trec_measure_nicknames[2].name, "all_trec");
 
     // Add set of all supported relevance measures.
     PyObject* const measures = PySet_New(NULL);
@@ -813,7 +817,11 @@ PyMODINIT_FUNC PyInit_pytrec_eval_ext(void) {
         for (int i=0; i<te_num_trec_measures; i++) {
             if (te_trec_measures[i]->meas_params != NULL) {
                 te_trec_measures[measure_idx]->meas_params;
-                default_meas_params[i] = {
+#ifdef _MSC_VER                
+                default_meas_params[i] = PARAMS {
+#else 
+                default_meas_params[i] = (PARAMS) {
+#endif
                     te_trec_measures[i]->meas_params->printable_params,
                     te_trec_measures[i]->meas_params->num_params,
                     te_trec_measures[i]->meas_params->param_values

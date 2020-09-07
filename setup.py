@@ -2,12 +2,12 @@
 
 from distutils.core import setup, Extension
 import os
+import sys
 import tempfile
 
-REMOTE_TREC_EVAL_ZIP = 'https://github.com/usnistgov/' \
-                       'trec_eval/archive/v9.0.5.zip'
+REMOTE_TREC_EVAL_ZIP = 'https://github.com/usnistgov/trec_eval/archive/v9.0.8.tar.gz'
 
-REMOTE_TREC_EVAL_ZIP_DIRNAME = 'trec_eval-9.0.5'
+REMOTE_TREC_EVAL_ZIP_DIRNAME = 'trec_eval.9.0.8'
 
 LOCAL_TREC_EVAL_DIR = os.path.realpath(
     os.path.join(__file__, '..', 'trec_eval'))
@@ -34,14 +34,20 @@ with tempfile.TemporaryDirectory() as tmp_dir:
         trec_eval_dir = os.path.join(tmp_dir, REMOTE_TREC_EVAL_ZIP_DIRNAME)
 
     for filename in os.listdir(trec_eval_dir):
-        if filename.endswith('.c'):
+        if filename.endswith('.c') and not filename == "trec_eval.c":
             TREC_EVAL_SRC.append(os.path.join(trec_eval_dir, filename))
+    #include the windows/ subdirectory on windows machines
+    if sys.platform == 'win32':
+        for filename in os.listdir(os.path.join(trec_eval_dir, "windows")):
+            if filename.endswith('.c') and not filename == "trec_eval.c":
+                TREC_EVAL_SRC.append(os.path.join(trec_eval_dir, "windows", filename))
 
     pytrec_eval_ext = Extension(
         'pytrec_eval_ext',
         sources=['src/pytrec_eval.cpp'] + TREC_EVAL_SRC,
-        libraries=['m', 'stdc++'],
-        include_dirs=[trec_eval_dir],
+        #windows doesnt need libm
+        libraries=[] if sys.platform == 'win32' else ['m', 'stdc++'],
+        include_dirs=[trec_eval_dir, os.path.join(trec_eval_dir, "windows")] if sys.platform == 'win32' else [trec_eval_dir],
         undef_macros=['NDEBUG'],
         extra_compile_args=['-g', '-Wall', '-O3'],
         define_macros=[('VERSIONID', '\"pytrec_eval\"'),
