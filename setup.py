@@ -1,13 +1,13 @@
 """Sets up pytrec_eval."""
 
-from distutils.core import setup, Extension
+from setuptools import setup, Extension
 import os
 import sys
 import tempfile
 
-REMOTE_TREC_EVAL_ZIP = 'https://github.com/usnistgov/trec_eval/archive/v9.0.8.tar.gz'
+REMOTE_TREC_EVAL_URI = 'https://github.com/usnistgov/trec_eval/archive/v9.0.8.tar.gz'
 
-REMOTE_TREC_EVAL_ZIP_DIRNAME = 'trec_eval.9.0.8'
+REMOTE_TREC_EVAL_TLD_NAME = 'trec_eval-9.0.8'
 
 LOCAL_TREC_EVAL_DIR = os.path.realpath(
     os.path.join(__file__, '..', 'trec_eval'))
@@ -19,19 +19,26 @@ with tempfile.TemporaryDirectory() as tmp_dir:
         # Use local version.
         trec_eval_dir = LOCAL_TREC_EVAL_DIR
     else:  # Fetch remote version.
-        print('Fetching trec_eval from {}.'.format(REMOTE_TREC_EVAL_ZIP))
+        print('Fetching trec_eval from {}.'.format(REMOTE_TREC_EVAL_URI))
 
         import io
         import urllib.request
-        import zipfile
 
-        response = urllib.request.urlopen(REMOTE_TREC_EVAL_ZIP)
+        response = urllib.request.urlopen(REMOTE_TREC_EVAL_URI)
         mmap_f = io.BytesIO(response.read())
 
-        trec_eval_zip = zipfile.ZipFile(mmap_f)
-        trec_eval_zip.extractall(tmp_dir)
+        if REMOTE_TREC_EVAL_URI.endswith('.zip'):
+            import zipfile
 
-        trec_eval_dir = os.path.join(tmp_dir, REMOTE_TREC_EVAL_ZIP_DIRNAME)
+            trec_eval_archive = zipfile.ZipFile(mmap_f)
+        elif REMOTE_TREC_EVAL_URI.endswith('.tar.gz'):
+            import tarfile
+
+            trec_eval_archive = tarfile.open(fileobj=mmap_f)
+
+        trec_eval_archive.extractall(tmp_dir)
+
+        trec_eval_dir = os.path.join(tmp_dir, REMOTE_TREC_EVAL_TLD_NAME)
 
     for filename in os.listdir(trec_eval_dir):
         if filename.endswith('.c') and not filename == "trec_eval.c":
