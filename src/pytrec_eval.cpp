@@ -318,14 +318,14 @@ static int RelevanceEvaluator_init(RelevanceEvaluator* self, PyObject* args, PyO
     PyObject* measures = NULL;
     PyObject* tmp_measures = NULL;
 
-    int32 relevance_level = 1;
+    int64 relevance_level = 1;
 
     static char* kwlist[] = {
         "query_relevance", "measures", "relevance_level",
         NULL};
 
     if (!PyArg_ParseTupleAndKeywords(
-            args, kwds, "OO|i", kwlist,
+            args, kwds, "OO|l", kwlist,
             &object_relevance_per_qid,
             &measures,
             &relevance_level)) {
@@ -347,13 +347,6 @@ static int RelevanceEvaluator_init(RelevanceEvaluator* self, PyObject* args, PyO
     if (!PySet_Check(measures)) {
         PyErr_SetString(PyExc_TypeError,
                         "Argument measures should be of type set.");
-
-        return -1;
-    }
-
-    if (relevance_level < 1) {
-        PyErr_SetString(PyExc_TypeError,
-                        "Argument relevance_level should be positive.");
 
         return -1;
     }
