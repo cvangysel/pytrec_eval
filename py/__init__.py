@@ -53,10 +53,11 @@ def compute_aggregated_measure(measure, values):
 
 
 class RelevanceEvaluator(_RelevanceEvaluator):
-    def __init__(self, query_relevance, measures, relevance_level=1):
+    def __init__(self, query_relevance, measures, relevance_level=1, judged_only=False):
         measures = self._expand_nicknames(measures)
         measures = self._combine_measures(measures)
-        super().__init__(query_relevance=query_relevance, measures=measures, relevance_level=relevance_level)
+        judged_only = 1 if judged_only else 0
+        super().__init__(query_relevance=query_relevance, measures=measures, relevance_level=relevance_level, judged_docs_only_flag=judged_only)
 
     def evaluate(self, scores):
         if not scores:

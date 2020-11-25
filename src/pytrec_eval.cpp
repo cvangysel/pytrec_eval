@@ -318,17 +318,19 @@ static int RelevanceEvaluator_init(RelevanceEvaluator* self, PyObject* args, PyO
     PyObject* measures = NULL;
     PyObject* tmp_measures = NULL;
 
-    int64 relevance_level = 1;
+    long relevance_level = 1;
+    long judged_docs_only_flag = 0;
 
     static char* kwlist[] = {
-        "query_relevance", "measures", "relevance_level",
+        "query_relevance", "measures", "relevance_level", "judged_docs_only_flag",
         NULL};
 
     if (!PyArg_ParseTupleAndKeywords(
-            args, kwds, "OO|l", kwlist,
+            args, kwds, "OO|ll", kwlist,
             &object_relevance_per_qid,
             &measures,
-            &relevance_level)) {
+            &relevance_level,
+            &judged_docs_only_flag)) {
         PyErr_SetString(
             PyExc_TypeError,
             "Expected object_relevance_per_qid dictionary "
@@ -351,10 +353,17 @@ static int RelevanceEvaluator_init(RelevanceEvaluator* self, PyObject* args, PyO
         return -1;
     }
 
+    if (judged_docs_only_flag != 0 && judged_docs_only_flag != 1) {
+        PyErr_SetString(PyExc_TypeError,
+                        "Argument judged_docs_only_flag must be either 0 or 1.");
+
+        return -1;
+    }
+
     // Configure trec_eval session.
     self->epi_.query_flag = 0;
     self->epi_.average_complete_flag = 0;
-    self->epi_.judged_docs_only_flag = 0;
+    self->epi_.judged_docs_only_flag = judged_docs_only_flag;
     self->epi_.summary_flag = 0;
     self->epi_.relation_flag = 1;
     self->epi_.debug_level = 0;
