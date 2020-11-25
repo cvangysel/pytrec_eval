@@ -5,6 +5,8 @@ import unittest
 
 import pytrec_eval
 
+print(pytrec_eval)
+
 TREC_EVAL_TEST_DIR = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), '..', 'trec_eval', 'test')
 
@@ -294,6 +296,53 @@ class PyTrecEvalUnitTest(unittest.TestCase):
         # empty run
         evaluator = pytrec_eval.RelevanceEvaluator(qrel, ['ndcg_cut', 'ndcg_cut.1,4', 'ndcg_cut_20,4', 'ndcg_cut_15', 'recall.1000', 'P'])
         self.assertEqual(set(evaluator.evaluate(run)['q1'].keys()), {'ndcg_cut_1', 'ndcg_cut_4', 'ndcg_cut_15', 'ndcg_cut_20', 'recall_1000', 'P_200', 'P_15', 'P_10', 'P_5', 'P_30', 'P_100', 'P_20', 'P_500', 'P_1000'})
+
+
+    def test_relevance_level_and_judged(self):
+        qrel = {
+            'q1': {
+                'd1': 0,
+                'd2': 1,
+                'd3': 2,
+                'd4': -1,
+                'd5': 1,
+            },
+        }
+        run = {
+            'q1': {
+                'd1': 5.,
+                'd2': 4.,
+                'd0': 3.,
+                'd3': 2.,
+                'd4': 1.,
+                'd5': 0.,
+            },
+        }
+
+        evaluator = pytrec_eval.RelevanceEvaluator(qrel, {'P.5'}, relevance_level=1)
+        self.assertAlmostEqual(evaluator.evaluate(run)['q1']['P_5'], 2/5)
+
+        evaluator = pytrec_eval.RelevanceEvaluator(qrel, {'P.5'}, relevance_level=2)
+        self.assertAlmostEqual(evaluator.evaluate(run)['q1']['P_5'], 1/5)
+
+        evaluator = pytrec_eval.RelevanceEvaluator(qrel, {'P.5'}, relevance_level=0)
+        self.assertAlmostEqual(evaluator.evaluate(run)['q1']['P_5'], 3/5)
+
+        evaluator = pytrec_eval.RelevanceEvaluator(qrel, {'P.5'}, relevance_level=-1)
+        self.assertAlmostEqual(evaluator.evaluate(run)['q1']['P_5'], 4/5)
+
+        evaluator = pytrec_eval.RelevanceEvaluator(qrel, {'P.5'}, relevance_level=1, judged_only=True)
+        self.assertAlmostEqual(evaluator.evaluate(run)['q1']['P_5'], 3/5)
+
+        evaluator = pytrec_eval.RelevanceEvaluator(qrel, {'P.5'}, relevance_level=2, judged_only=True)
+        self.assertAlmostEqual(evaluator.evaluate(run)['q1']['P_5'], 1/5)
+
+        evaluator = pytrec_eval.RelevanceEvaluator(qrel, {'P.5'}, relevance_level=0, judged_only=True)
+        self.assertAlmostEqual(evaluator.evaluate(run)['q1']['P_5'], 4/5)
+
+        evaluator = pytrec_eval.RelevanceEvaluator(qrel, {'P.5'}, relevance_level=-1, judged_only=True)
+        self.assertAlmostEqual(evaluator.evaluate(run)['q1']['P_5'], 4/5) # I'd expect 5/5, but https://github.com/usnistgov/trec_eval/issues/29
+
 
 # TODO(cvangysel): add tests to detect memory leaks.
 class PyTrecEvalIntegrationTest(unittest.TestCase):
