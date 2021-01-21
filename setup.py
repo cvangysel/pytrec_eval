@@ -53,13 +53,18 @@ with tempfile.TemporaryDirectory() as tmp_dir:
         'pytrec_eval_ext',
         sources=['src/pytrec_eval.cpp'] + TREC_EVAL_SRC,
         #windows doesnt need libm
-        libraries=[] if sys.platform == 'win32' else ['m', 'stdc++'],
+        libraries=[] if sys.platform == 'win32' else ['m'],
         include_dirs=[trec_eval_dir, os.path.join(trec_eval_dir, "windows")] if sys.platform == 'win32' else [trec_eval_dir],
         undef_macros=['NDEBUG'],
-        extra_compile_args=['-g', '-Wall', '-O3'],
+        extra_compile_args=['-g', '-Wall', '-O3', '-stdlib=libc++'],
         define_macros=[('VERSIONID', '\"pytrec_eval\"'),
                        ('_GLIBCXX_USE_CXX11_ABI', '0'),
                        ('P_NEEDS_GNU_CXX_NAMESPACE', '1')])
+    # https://cmichel.io/fixing-cpp-compilation-bugs-for-the-mac-os-catalina-upgrade/
+    # You might still run into linker errors like
+    # ld: library not found for -lxxx.
+    # The linker also needs to be told to look for libraries in the CommandLineTools/Xcode paths by setting the LIBRARY_PATH env variable.
+    # export LIBRARY_PATH =$LIBRARY_PATH: /Library/Developer/CommandLineTools/SDKs/ MacOSX10.15.sdk/usr/lib
 
     setup(name='pytrec_eval',
           version='0.5',
