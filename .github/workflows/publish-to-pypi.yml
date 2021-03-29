@@ -39,7 +39,7 @@ jobs:
       if: github.event.inputs.releasetype == 'test'
       run: |
         $Env:PYTRECEVAL_NAME_SUFFIX = "-craigm"
-        $DateTime = Get-Date -format yyyyMMddHmmss
+        $DateTime = Get-Date -format yyyyMMddHmm
         $Env:PYTRECEVAL_VERSION_SUFFIX = ".$DateTime"
         python setup.py bdist_wheel
         dir dist/*
