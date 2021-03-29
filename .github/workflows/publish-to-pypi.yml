@@ -46,9 +46,9 @@ jobs:
     # Upload to TestPyPI
     - name: Build and Upload to TestPyPI
       run: |
-        python3 -m twine upload dist/*
+        python3 -m twine upload --verbose dist/*
       env:
-        TWINE_USERNAME: cmacdonald
+        TWINE_USERNAME:  __token__
         TWINE_PASSWORD: ${{ secrets.test_pypi_password }}
         TWINE_REPOSITORY: testpypi
   
