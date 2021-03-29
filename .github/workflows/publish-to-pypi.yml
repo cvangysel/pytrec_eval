@@ -46,11 +46,10 @@ jobs:
     # Upload to TestPyPI
     - name: Build and Upload to TestPyPI
       run: |
-        python3 setup.py sdist bdist_wheel
         python3 -m twine upload dist/*
       env:
         TWINE_USERNAME: cmacdonald
-        TWINE_PASSWORD: ${{ secrets.pypi_password }}
+        TWINE_PASSWORD: ${{ secrets.test_pypi_password }}
         TWINE_REPOSITORY: testpypi
   
     # - name: Publish distribution 📦 to Test PyPI
