@@ -32,7 +32,11 @@ jobs:
 
     - name: Build a test wheel
       if: github.event.inputs.releasetype == 'test'
-      run: PYTRECEVAL_NAME_SUFFIX="-craigm" PYTRECEVAL_VERSION_SUFFIX=".`date +%s`" python setup.py bdist_wheel
+      run: |
+        $Env:PYTRECEVAL_NAME_SUFFIX = "-craigm"
+        $DateTime = Get-Date -format yyyyMMdd-Hmmss
+        $Env:PYTRECEVAL_VERSION_SUFFIX = "$DateTime"
+        python setup.py bdist_wheel
 
     - name: Build a release wheel
       if: github.event.inputs.releasetype == 'release'
