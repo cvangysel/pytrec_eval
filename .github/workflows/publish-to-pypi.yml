@@ -49,18 +49,5 @@ jobs:
         python3 -m twine upload --verbose dist/*
       env:
         TWINE_USERNAME:  __token__
-        TWINE_PASSWORD: ${{ secrets.test_pypi_password }}
+        TWINE_PASSWORD: ${{ secrets.TEST_PYPI_PASSWORD }}
         TWINE_REPOSITORY: testpypi
-  
-    # - name: Publish distribution 📦 to Test PyPI
-    #   if: github.event.inputs.releasetype == 'test'
-    #   uses: pypa/gh-action-pypi-publish@master
-    #   with:
-    #     password: ${{ secrets.test_pypi_password }}
-    #     repository_url: https://test.pypi.org/legacy/
-
-    # - name: Publish distribution 📦 to PyPI
-    #   if: github.event.inputs.releasetype == 'release'
-    #   uses: pypa/gh-action-pypi-publish@master
-    #   with:
-    #     password: ${{ secrets.pypi_password }}
