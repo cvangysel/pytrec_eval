@@ -35,7 +35,7 @@ jobs:
       run: |
         $Env:PYTRECEVAL_NAME_SUFFIX = "-craigm"
         $DateTime = Get-Date -format yyyyMMdd_Hmmss
-        $Env:PYTRECEVAL_VERSION_SUFFIX = "-$DateTime"
+        $Env:PYTRECEVAL_VERSION_SUFFIX = "_$DateTime"
         python setup.py bdist_wheel
         dir dist/*
 
