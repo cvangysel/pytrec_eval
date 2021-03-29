@@ -12,8 +12,13 @@ on:
 jobs:
   build-n-publish:
     name: Build and publish Python 🐍 distributions 📦 to PyPI and TestPyPI
-    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8, 3.9]
+        os: ['windows-latest']
+        architecture: ['x64']
 
+    runs-on: ${{ matrix.os }}
     steps:
     - name: Display phase
       run: echo "Deploying "${{github.event.inputs.releasetype}}" $INPUT_RELEASETYPE to PyPI"
