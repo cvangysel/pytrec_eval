@@ -34,7 +34,7 @@ jobs:
       if: github.event.inputs.releasetype == 'test'
       run: |
         $Env:PYTRECEVAL_NAME_SUFFIX = "-craigm"
-        $DateTime = Get-Date -format yyyyMMdd-Hmmss
+        $DateTime = Get-Date -format yyyyMMdd_Hmmss
         $Env:PYTRECEVAL_VERSION_SUFFIX = "-$DateTime"
         python setup.py bdist_wheel
         dir dist/*
@@ -44,7 +44,7 @@ jobs:
       run: python setup.py bdist_wheel
 
     # Upload to TestPyPI
-    - name: Build and Upload to TestPyPI
+    - name: Upload to TestPyPI
       run: |
         python3 -m twine upload --verbose dist/*
       env:
