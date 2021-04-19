@@ -91,7 +91,7 @@ jobs:
       if: github.event.inputs.releasetype == 'test'
       env:
         CIBW_SKIP: "cp27-* pp27-*"  # skip Python 2.7 wheels
-        CIBW_ENVIRONMENT: "PYTRECEVAL_NAME_SUFFIX = '-seanm'"
+        CIBW_ENVIRONMENT: "PYTRECEVAL_NAME_SUFFIX='-seanm'"
       run: |
         python -m cibuildwheel --output-dir wheelhouse
 
@@ -151,7 +151,7 @@ jobs:
     - name: build (test)
       if: github.event.inputs.releasetype == 'test'
       env:
-        PYTRECEVAL_NAME_SUFFIX = "-seanm"
+        PYTRECEVAL_NAME_SUFFIX: "-seanm"
       run: python setup.py bdist_wheel
 
     - name: build (release)
@@ -195,7 +195,7 @@ jobs:
     - name: build (test)
       if: github.event.inputs.releasetype == 'test'
       env:
-        PYTRECEVAL_NAME_SUFFIX = "-seanm"
+        PYTRECEVAL_NAME_SUFFIX: "-seanm"
       run: |
         python setup.py sdist
 
