@@ -3,6 +3,8 @@ pytrec_eval
 
 pytrec\_eval is a Python interface to TREC's evaluation tool, [trec\_eval](https://github.com/usnistgov/trec_eval). It is an attempt to stop the cultivation of custom implementations of Information Retrieval evaluation measures for the Python programming language.
 
+>> NB: This is a FORK of pytrec_eval that contains pre-built images for Linux, Windows and Mac
+
 Requirements
 ------------
 
@@ -13,7 +15,7 @@ Installation
 
 Installation is simple and should be relatively painless if your Python environment is functioning correctly (see below for FAQs).
 
-	pip install pytrec_eval
+	pip install pytrec_eval_terrier
 	
 Examples
 --------
