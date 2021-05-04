@@ -38,7 +38,7 @@ jobs:
     - name: Build a test wheel
       if: github.event.inputs.releasetype == 'test'
       run: |
-        $Env:PYTRECEVAL_NAME_SUFFIX = "-terrier"
+        $Env:PYTRECEVAL_NAME_SUFFIX = "-craigm"
         $DateTime = Get-Date -format yyyyMMddHmm
         $Env:PYTRECEVAL_VERSION_SUFFIX = ".$DateTime"
         python setup.py bdist_wheel
@@ -46,7 +46,9 @@ jobs:
 
     - name: Build a release wheel
       if: github.event.inputs.releasetype == 'release'
-      run: python setup.py bdist_wheel
+      run: |
+        $Env:PYTRECEVAL_NAME_SUFFIX = "-terrier"
+        python setup.py bdist_wheel
 
     - name: Upload to TestPyPI
       if: github.event.inputs.releasetype == 'test'
