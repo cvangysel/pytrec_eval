@@ -38,7 +38,7 @@ jobs:
     - name: Build a test wheel
       if: github.event.inputs.releasetype == 'test'
       run: |
-        $Env:PYTRECEVAL_NAME_SUFFIX = "-seanm"
+        $Env:PYTRECEVAL_NAME_SUFFIX = "-terrier"
         $DateTime = Get-Date -format yyyyMMddHmm
         $Env:PYTRECEVAL_VERSION_SUFFIX = ".$DateTime"
         python setup.py bdist_wheel
@@ -64,7 +64,6 @@ jobs:
       env:
         TWINE_USERNAME:  __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        TWINE_REPOSITORY: testpypi
 
 
 
@@ -91,7 +90,7 @@ jobs:
       if: github.event.inputs.releasetype == 'test'
       env:
         CIBW_SKIP: "cp27-* pp27-*"  # skip Python 2.7 wheels
-        CIBW_ENVIRONMENT: "PYTRECEVAL_NAME_SUFFIX='-seanm'"
+        CIBW_ENVIRONMENT: "PYTRECEVAL_NAME_SUFFIX='-craigm'"
       run: |
         python -m cibuildwheel --output-dir wheelhouse
 
@@ -99,6 +98,7 @@ jobs:
       if: github.event.inputs.releasetype == 'release'
       env:
         CIBW_SKIP: "cp27-* pp27-*"  # skip Python 2.7 wheels
+        CIBW_ENVIRONMENT: "PYTRECEVAL_NAME_SUFFIX='-terrier'"
       run: |
         python -m cibuildwheel --output-dir wheelhouse
 
@@ -119,7 +119,6 @@ jobs:
       env:
         TWINE_USERNAME:  __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        TWINE_REPOSITORY: testpypi
 
 
 
@@ -151,11 +150,13 @@ jobs:
     - name: build (test)
       if: github.event.inputs.releasetype == 'test'
       env:
-        PYTRECEVAL_NAME_SUFFIX: "-seanm"
+        PYTRECEVAL_NAME_SUFFIX: "-craigm"
       run: python setup.py bdist_wheel
 
     - name: build (release)
       if: github.event.inputs.releasetype == 'release'
+      env:
+        PYTRECEVAL_NAME_SUFFIX: "-terrier"
       run: python setup.py bdist_wheel
 
     - name: Upload to TestPyPI
@@ -174,7 +175,6 @@ jobs:
       env:
         TWINE_USERNAME:  __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        TWINE_REPOSITORY: testpypi
 
 
 
@@ -195,12 +195,14 @@ jobs:
     - name: build (test)
       if: github.event.inputs.releasetype == 'test'
       env:
-        PYTRECEVAL_NAME_SUFFIX: "-seanm"
+        PYTRECEVAL_NAME_SUFFIX: "-craigm"
       run: |
         python setup.py sdist
 
     - name: build (release)
       if: github.event.inputs.releasetype == 'release'
+      env:
+        PYTRECEVAL_NAME_SUFFIX: "-terrier"
       run: |
         python setup.py sdist
 
@@ -221,4 +223,3 @@ jobs:
       env:
         TWINE_USERNAME:  __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        TWINE_REPOSITORY: testpypi
