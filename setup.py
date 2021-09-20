@@ -32,7 +32,7 @@ def get_version(rel_path):
 
 def get_name():
     suffix = os.environ["PYTRECEVAL_NAME_SUFFIX" ] if "PYTRECEVAL_NAME_SUFFIX" in os.environ else ""
-    return "pytrec_eval" + suffix
+    return "pytrec_eval-terrier" + suffix
 
 with tempfile.TemporaryDirectory() as tmp_dir:
     if os.path.isfile(os.path.join(LOCAL_TREC_EVAL_DIR, 'trec_eval.h')):

@@ -47,7 +47,6 @@ jobs:
     - name: Build a release wheel
       if: github.event.inputs.releasetype == 'release'
       run: |
-        $Env:PYTRECEVAL_NAME_SUFFIX = "-terrier"
         python setup.py bdist_wheel
 
     - name: Upload to TestPyPI
@@ -100,7 +99,6 @@ jobs:
       if: github.event.inputs.releasetype == 'release'
       env:
         CIBW_SKIP: "cp27-* pp27-*"  # skip Python 2.7 wheels
-        CIBW_ENVIRONMENT: "PYTRECEVAL_NAME_SUFFIX='-terrier'"
       run: |
         python -m cibuildwheel --output-dir wheelhouse
 
@@ -157,8 +155,6 @@ jobs:
 
     - name: build (release)
       if: github.event.inputs.releasetype == 'release'
-      env:
-        PYTRECEVAL_NAME_SUFFIX: "-terrier"
       run: python setup.py bdist_wheel
 
     - name: Upload to TestPyPI
@@ -203,8 +199,6 @@ jobs:
 
     - name: build (release)
       if: github.event.inputs.releasetype == 'release'
-      env:
-        PYTRECEVAL_NAME_SUFFIX: "-terrier"
       run: |
         python setup.py sdist
 
