@@ -14,7 +14,7 @@ jobs:
     
     strategy:
       matrix:
-        python-version: ['3.5', '3.10']
+        python-version: ['3.6', '3.10']
         os: ['ubuntu-latest', 'windows-latest', 'macOs-latest']
         architecture: ['x64']
 
