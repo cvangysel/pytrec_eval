@@ -91,9 +91,8 @@ jobs:
       if: github.event.inputs.releasetype == 'test'
       env:
         CIBW_SKIP: "cp27-* pp27-*"  # skip Python 2.7 wheels
-        CIBW_ENVIRONMENT: "PYTRECEVAL_NAME_SUFFIX='-craigm'"
       run: |
-        PYTRECEVAL_VERSION_SUFFIX=".`date +%s`" python -m cibuildwheel --output-dir wheelhouse
+        CIBW_ENVIRONMENT="PYTRECEVAL_NAME_SUFFIX='-craigm' PYTRECEVAL_VERSION_SUFFIX='.`date +%s`'" python -m cibuildwheel --output-dir wheelhouse
 
     - name: build (release)
       if: github.event.inputs.releasetype == 'release'
