@@ -220,6 +220,19 @@ class PyTrecEvalUnitTest(unittest.TestCase):
         self.assertAlmostEqual(result['ndcg_cut_2'], 0.0)
         self.assertAlmostEqual(result['ndcg_cut_1'], 0.0)
         self.assertAlmostEqual(result['ndcg_cut_1000'], 0.5)
+        # Make sure we get the same result again (see https://github.com/cvangysel/pytrec_eval/issues/38)
+        result = evaluator.evaluate({
+                'q1': {
+                    'd1': 1.0,
+                    'd2': 0.0,  # rank 3
+                    'd3': 1.5,
+                },
+                'q2': {},
+            })['q1']
+        self.assertAlmostEqual(result['ndcg_cut_3'], 0.5)
+        self.assertAlmostEqual(result['ndcg_cut_2'], 0.0)
+        self.assertAlmostEqual(result['ndcg_cut_1'], 0.0)
+        self.assertAlmostEqual(result['ndcg_cut_1000'], 0.5)
 
     def test_empty(self):
         qrel = {
