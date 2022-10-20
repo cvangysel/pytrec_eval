@@ -121,6 +121,31 @@ class PyTrecEvalUnitTest(unittest.TestCase):
             })['q1']['ndcg'],
             0.6309297535714575)
 
+        self.assertAlmostEqual(
+            evaluator.evaluate({
+                'q1': {},
+                'q2': {
+                    'd1': 1.0,
+                    'd2': 0.0,  # rank 3
+                    'd3': 1.5,
+                },
+            })['q2']['ndcg'],
+            0.9197207891481876)
+
+        evaluator = pytrec_eval.RelevanceEvaluator(
+            qrel, {'map', 'ndcg'}, judged_docs_only_flag=1)
+
+        self.assertAlmostEqual(
+            evaluator.evaluate({
+                'q1': {},
+                'q2': {
+                    'd1': 1.0, # unjudged
+                    'd2': 0.0,  # rank 3
+                    'd3': 1.5,
+                },
+            })['q2']['ndcg'],
+            1.0)
+
     def test_nicknames(self):
         qrel = {
             'q1': {
