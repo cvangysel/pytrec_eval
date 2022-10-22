@@ -133,7 +133,7 @@ class PyTrecEvalUnitTest(unittest.TestCase):
             0.9197207891481876)
 
         evaluator = pytrec_eval.RelevanceEvaluator(
-            qrel, {'map', 'ndcg'}, judged_docs_only_flag=1)
+            qrel, {'map', 'ndcg'}, judged_docs_only_flag=True)
 
         self.assertAlmostEqual(
             evaluator.evaluate({
