@@ -1,5 +1,5 @@
 """Module pytrec_eval."""
-__version__ = "0.5.4"
+__version__ = "0.5.5"
 import re
 import collections
 import numpy as np
@@ -53,10 +53,10 @@ def compute_aggregated_measure(measure, values):
 
 
 class RelevanceEvaluator(_RelevanceEvaluator):
-    def __init__(self, query_relevance, measures, relevance_level=1):
+    def __init__(self, query_relevance, measures, relevance_level=1, judged_docs_only_flag=False):
         measures = self._expand_nicknames(measures)
         measures = self._combine_measures(measures)
-        super().__init__(query_relevance=query_relevance, measures=measures, relevance_level=relevance_level)
+        super().__init__(query_relevance=query_relevance, measures=measures, relevance_level=relevance_level, judged_docs_only_flag=judged_docs_only_flag)
 
     def evaluate(self, scores):
         if not scores:
