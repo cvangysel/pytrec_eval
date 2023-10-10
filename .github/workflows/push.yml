@@ -38,13 +38,11 @@ jobs:
         "%VS140COMNTOOLS%../../VC/vcvarsall.bat"
         echo "$INCLUDE"
         set INCLUDE "C:/Program Files (x86)/Windows Kits/10/Include/10.0.10240.0/ucrt"
-        python setup.py bdist
         pip install --timeout=120 -vv .
 
     - name: install-unix
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOs-latest'
       run: |
-        python setup.py bdist
         pip install --timeout=120 .
         
     - name: Test-unix with pytest
