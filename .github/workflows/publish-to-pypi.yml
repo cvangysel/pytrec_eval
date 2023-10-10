@@ -41,13 +41,13 @@ jobs:
         $Env:PYTRECEVAL_NAME_SUFFIX = "-craigm"
         $DateTime = Get-Date -format yyyyMMddHmm
         $Env:PYTRECEVAL_VERSION_SUFFIX = ".$DateTime"
-        python -m build
+        python -m build --wheel
         dir dist/*
 
     - name: Build a release wheel
       if: github.event.inputs.releasetype == 'release'
       run: |
-        python -m build
+        python -m build --wheel
 
     - name: Upload to TestPyPI
       if: github.event.inputs.releasetype == 'test'
@@ -150,11 +150,11 @@ jobs:
       if: github.event.inputs.releasetype == 'test'
       env:
         PYTRECEVAL_NAME_SUFFIX: "-craigm"
-      run: PYTRECEVAL_VERSION_SUFFIX=".`date +%s`" python -m build
+      run: PYTRECEVAL_VERSION_SUFFIX=".`date +%s`" python -m build --wheel
 
     - name: build (release)
       if: github.event.inputs.releasetype == 'release'
-      run: python -m build
+      run: python -m build --wheel
 
     - name: Upload to TestPyPI
       if: github.event.inputs.releasetype == 'test'
@@ -194,12 +194,12 @@ jobs:
       env:
         PYTRECEVAL_NAME_SUFFIX: "-craigm"
       run: |
-        PYTRECEVAL_VERSION_SUFFIX=".`date +%s`" python -m build
+        PYTRECEVAL_VERSION_SUFFIX=".`date +%s`" python -m build --sdist
 
     - name: build (release)
       if: github.event.inputs.releasetype == 'release'
       run: |
-        python -m build
+        python -m build --sdist
 
     # Upload to TestPyPI
     - name: Upload to TestPyPI
