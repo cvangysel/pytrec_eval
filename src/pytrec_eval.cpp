@@ -65,6 +65,15 @@ char* CopyCString(const char* originalCString) {
     return newCString;
 }
 
+char* CopyCStringDoubleTerminate(const char* originalCString) {
+    // Copy the string, but with an extra NULL terminal.
+    auto len = strlen(originalCString);
+    char* const newCString = new char[len + 2];
+    strcpy(newCString, originalCString);
+    newCString[len+1] = '\0';
+    return newCString;
+}
+
 static PyTypeObject RelevanceEvaluatorType;
 
 // RelevanceEvaluator
@@ -319,16 +328,18 @@ static int RelevanceEvaluator_init(RelevanceEvaluator* self, PyObject* args, PyO
     PyObject* tmp_measures = NULL;
 
     int32 relevance_level = 1;
+    int32 judged_docs_only_flag = 0;
 
     static char* kwlist[] = {
-        "query_relevance", "measures", "relevance_level",
+        "query_relevance", "measures", "relevance_level", "judged_docs_only_flag",
         NULL};
 
     if (!PyArg_ParseTupleAndKeywords(
-            args, kwds, "OO|i", kwlist,
+            args, kwds, "OO|ii", kwlist,
             &object_relevance_per_qid,
             &measures,
-            &relevance_level)) {
+            &relevance_level,
+            &judged_docs_only_flag)) {
         PyErr_SetString(
             PyExc_TypeError,
             "Expected object_relevance_per_qid dictionary "
@@ -361,7 +372,7 @@ static int RelevanceEvaluator_init(RelevanceEvaluator* self, PyObject* args, PyO
     // Configure trec_eval session.
     self->epi_.query_flag = 0;
     self->epi_.average_complete_flag = 0;
-    self->epi_.judged_docs_only_flag = 0;
+    self->epi_.judged_docs_only_flag = judged_docs_only_flag;
     self->epi_.summary_flag = 0;
     self->epi_.relation_flag = 1;
     self->epi_.debug_level = 0;
@@ -386,7 +397,7 @@ static int RelevanceEvaluator_init(RelevanceEvaluator* self, PyObject* args, PyO
     char* meas_args;
     char* meas_name;
     while ((meas = PyIter_Next(meas_iter))) {
-        meas_name = CopyCString(PyUnicode_AsUTF8(meas));
+        meas_name = CopyCStringDoubleTerminate(PyUnicode_AsUTF8(meas));
         meas_args = meas_name;
         while (*meas_args && *meas_args!='.') meas_args++;
         if (*meas_args) {
@@ -549,6 +560,20 @@ static PyObject* RelevanceEvaluator_evaluate(RelevanceEvaluator* self, PyObject*
         std::sort(
             text_results, text_results + num_text_results,
             query_document_pair_compare);
+    }
+
+    // During the first invocation, trec_eval replaces ',' with '\0' as it parses the parameters.
+    // So, we correct this by replacing them back. This string is now double-NULL terminated to
+    // let us know where the actual end of the string is.
+    // See <https://github.com/cvangysel/pytrec_eval/issues/38>
+    int i = 0;
+    while (self->epi_.meas_arg[i].measure_name != NULL) {
+      for (char* ptr=self->epi_.meas_arg[i].parameters; *ptr | *(ptr+1); ptr++) {
+        if (*ptr == '\0') {
+          *ptr = ',';
+        }
+      }
+      i++;
     }
 
     ALL_RESULTS all_results;

@@ -1,0 +1,220 @@
+#follows https://packaging.python.org/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
+name: Publish Python 🐍 sdist and bdist 📦 to PyPI and TestPyPI
+
+on: 
+  workflow_dispatch:
+    inputs:
+      releasetype:
+        description: "Is this a 'release' or a 'test'?" 
+        required: true
+        default: 'test'
+
+jobs:
+  build-n-publish-windows-bdist:
+    name: windows bdist
+    strategy:
+      matrix:
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
+        os: ['windows-latest']
+        architecture: ['x64']
+
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Display phase
+      run: echo "Deploying "${{github.event.inputs.releasetype}}" $INPUT_RELEASETYPE to PyPI"
+
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip build twine
+        pip install -r requirements.txt
+
+    - name: Build a test wheel
+      if: github.event.inputs.releasetype == 'test'
+      run: |
+        $Env:PYTRECEVAL_NAME_SUFFIX = "-craigm"
+        $DateTime = Get-Date -format yyyyMMddHmm
+        $Env:PYTRECEVAL_VERSION_SUFFIX = ".$DateTime"
+        python -m build --wheel
+        dir dist/*
+
+    - name: Build a release wheel
+      if: github.event.inputs.releasetype == 'release'
+      run: |
+        python -m build --wheel
+
+    - name: Upload to TestPyPI
+      if: github.event.inputs.releasetype == 'test'
+      run: |
+        python3 -m twine upload --verbose dist/*
+      env:
+        TWINE_USERNAME:  __token__
+        TWINE_PASSWORD: ${{ secrets.TEST_PYPI_PASSWORD }}
+        TWINE_REPOSITORY: testpypi
+ 
+    - name: Upload to PyPI
+      if: github.event.inputs.releasetype == 'release'
+      run: |
+        python3 -m twine upload --verbose dist/*
+      env:
+        TWINE_USERNAME:  __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+
+
+
+  build-n-publish-manylinux-bdist:
+    name: manylinux bdist
+    runs-on: ubuntu-latest
+    steps:
+    - name: Display phase
+      run: echo "Deploying "${{github.event.inputs.releasetype}}" $INPUT_RELEASETYPE to PyPI"
+
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip build twine cibuildwheel
+        pip install -r requirements.txt
+
+    - name: build (test)
+      if: github.event.inputs.releasetype == 'test'
+      env:
+        CIBW_SKIP: "cp27-* pp27-*"  # skip Python 2.7 wheels
+      run: |
+        CIBW_ENVIRONMENT="PYTRECEVAL_NAME_SUFFIX='-craigm' PYTRECEVAL_VERSION_SUFFIX='.`date +%s`'" python -m cibuildwheel --output-dir wheelhouse
+
+    - name: build (release)
+      if: github.event.inputs.releasetype == 'release'
+      env:
+        CIBW_SKIP: "cp27-* pp27-*"  # skip Python 2.7 wheels
+      run: |
+        python -m cibuildwheel --output-dir wheelhouse
+
+    # Upload to TestPyPI
+    - name: Upload to TestPyPI
+      if: github.event.inputs.releasetype == 'test'
+      run: |
+        python3 -m twine upload --verbose wheelhouse/*
+      env:
+        TWINE_USERNAME:  __token__
+        TWINE_PASSWORD: ${{ secrets.TEST_PYPI_PASSWORD }}
+        TWINE_REPOSITORY: testpypi
+ 
+    - name: Upload to PyPI
+      if: github.event.inputs.releasetype == 'release'
+      run: |
+        python3 -m twine upload --verbose wheelhouse/*
+      env:
+        TWINE_USERNAME:  __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+
+
+
+  build-n-publish-macos-bdist:
+    strategy:
+      matrix:
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
+        os: ['macos-latest']
+        architecture: ['x64']
+
+    name: macos bdist
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Display phase
+      run: echo "Deploying "${{github.event.inputs.releasetype}}" $INPUT_RELEASETYPE to PyPI"
+
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip build twine
+        pip install -r requirements.txt
+
+    - name: build (test)
+      if: github.event.inputs.releasetype == 'test'
+      env:
+        PYTRECEVAL_NAME_SUFFIX: "-craigm"
+      run: PYTRECEVAL_VERSION_SUFFIX=".`date +%s`" python -m build --wheel
+
+    - name: build (release)
+      if: github.event.inputs.releasetype == 'release'
+      run: python -m build --wheel
+
+    - name: Upload to TestPyPI
+      if: github.event.inputs.releasetype == 'test'
+      run: |
+        python3 -m twine upload --verbose dist/*
+      env:
+        TWINE_USERNAME:  __token__
+        TWINE_PASSWORD: ${{ secrets.TEST_PYPI_PASSWORD }}
+        TWINE_REPOSITORY: testpypi
+ 
+    - name: Upload to PyPI
+      if: github.event.inputs.releasetype == 'release'
+      run: |
+        python3 -m twine upload --verbose dist/*
+      env:
+        TWINE_USERNAME:  __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+
+
+
+
+  build-n-publish-sdist:
+    name: sdist
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+    - name: install-deps
+      run: |
+        python -m pip install --upgrade pip build twine
+        pip install -r requirements.txt
+
+    - name: build (test)
+      if: github.event.inputs.releasetype == 'test'
+      env:
+        PYTRECEVAL_NAME_SUFFIX: "-craigm"
+      run: |
+        PYTRECEVAL_VERSION_SUFFIX=".`date +%s`" python -m build --sdist
+
+    - name: build (release)
+      if: github.event.inputs.releasetype == 'release'
+      run: |
+        python -m build --sdist
+
+    # Upload to TestPyPI
+    - name: Upload to TestPyPI
+      if: github.event.inputs.releasetype == 'test'
+      run: |
+        python3 -m twine upload --verbose dist/*
+      env:
+        TWINE_USERNAME:  __token__
+        TWINE_PASSWORD: ${{ secrets.TEST_PYPI_PASSWORD }}
+        TWINE_REPOSITORY: testpypi
+ 
+    - name: Upload to PyPI
+      if: github.event.inputs.releasetype == 'release'
+      run: |
+        python3 -m twine upload --verbose dist/*
+      env:
+        TWINE_USERNAME:  __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}

@@ -121,6 +121,31 @@ class PyTrecEvalUnitTest(unittest.TestCase):
             })['q1']['ndcg'],
             0.6309297535714575)
 
+        self.assertAlmostEqual(
+            evaluator.evaluate({
+                'q1': {},
+                'q2': {
+                    'd1': 1.0,
+                    'd2': 0.0,  # rank 3
+                    'd3': 1.5,
+                },
+            })['q2']['ndcg'],
+            0.9197207891481876)
+
+        evaluator = pytrec_eval.RelevanceEvaluator(
+            qrel, {'map', 'ndcg'}, judged_docs_only_flag=True)
+
+        self.assertAlmostEqual(
+            evaluator.evaluate({
+                'q1': {},
+                'q2': {
+                    'd1': 1.0, # unjudged
+                    'd2': 0.0,  # rank 3
+                    'd3': 1.5,
+                },
+            })['q2']['ndcg'],
+            1.0)
+
     def test_nicknames(self):
         qrel = {
             'q1': {
@@ -208,6 +233,19 @@ class PyTrecEvalUnitTest(unittest.TestCase):
             1.0)
 
         evaluator = pytrec_eval.RelevanceEvaluator(qrel, {'ndcg_cut.1,2,3,1000'})
+        result = evaluator.evaluate({
+                'q1': {
+                    'd1': 1.0,
+                    'd2': 0.0,  # rank 3
+                    'd3': 1.5,
+                },
+                'q2': {},
+            })['q1']
+        self.assertAlmostEqual(result['ndcg_cut_3'], 0.5)
+        self.assertAlmostEqual(result['ndcg_cut_2'], 0.0)
+        self.assertAlmostEqual(result['ndcg_cut_1'], 0.0)
+        self.assertAlmostEqual(result['ndcg_cut_1000'], 0.5)
+        # Make sure we get the same result again (see https://github.com/cvangysel/pytrec_eval/issues/38)
         result = evaluator.evaluate({
                 'q1': {
                     'd1': 1.0,

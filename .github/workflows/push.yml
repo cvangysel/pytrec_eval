@@ -14,16 +14,17 @@ jobs:
     
     strategy:
       matrix:
-        python-version: [3.5, 3.8]
+        python-version: ['3.7', '3.9', '3.12']
         os: ['ubuntu-latest', 'windows-latest', 'macOs-latest']
         architecture: ['x64']
 
     runs-on: ${{ matrix.os }}
     steps:
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+    
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -38,13 +39,11 @@ jobs:
         "%VS140COMNTOOLS%../../VC/vcvarsall.bat"
         echo "$INCLUDE"
         set INCLUDE "C:/Program Files (x86)/Windows Kits/10/Include/10.0.10240.0/ucrt"
-        python setup.py bdist
         pip install --timeout=120 -vv .
 
     - name: install-unix
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOs-latest'
       run: |
-        python setup.py bdist
         pip install --timeout=120 .
         
     - name: Test-unix with pytest

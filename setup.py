@@ -14,6 +14,26 @@ LOCAL_TREC_EVAL_DIR = os.path.realpath(
 
 TREC_EVAL_SRC = []
 
+import codecs
+def read(rel_path):
+    here = os.path.abspath(os.path.dirname(__file__))
+    with codecs.open(os.path.join(here, rel_path), 'r') as fp:
+        return fp.read()
+
+def get_version(rel_path):
+    import os
+    suffix = os.environ["PYTRECEVAL_VERSION_SUFFIX" ] if "PYTRECEVAL_VERSION_SUFFIX" in os.environ else ""
+    for line in read(rel_path).splitlines():
+        if line.startswith('__version__'):
+            delim = '"' if '"' in line else "'"
+            return line.split(delim)[1] + suffix
+    else:
+        raise RuntimeError("Unable to find version string.")
+
+def get_name():
+    suffix = os.environ["PYTRECEVAL_NAME_SUFFIX" ] if "PYTRECEVAL_NAME_SUFFIX" in os.environ else ""
+    return "pytrec_eval-terrier" + suffix
+
 with tempfile.TemporaryDirectory() as tmp_dir:
     if os.path.isfile(os.path.join(LOCAL_TREC_EVAL_DIR, 'trec_eval.h')):
         # Use local version.
@@ -61,8 +81,8 @@ with tempfile.TemporaryDirectory() as tmp_dir:
                        ('_GLIBCXX_USE_CXX11_ABI', '0'),
                        ('P_NEEDS_GNU_CXX_NAMESPACE', '1')])
 
-    setup(name='pytrec_eval',
-          version='0.5',
+    setup(name=get_name(),
+          version=get_version("py/__init__.py"),
           description='Provides Python bindings for popular '
                       'Information Retrieval measures implemented '
                       'within trec_eval.',
